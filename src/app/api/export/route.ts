@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server';
-import archiver from 'archiver';
+import { createRequire } from 'module';
 import { PassThrough } from 'stream';
 import { prisma } from '@/lib/prisma';
 import fs from 'fs';
 import path from 'path';
+
+const require = createRequire(import.meta.url);
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const archiver = require('archiver');
 
 // Helper for CSV
 function toCSV(data: any[]) {
