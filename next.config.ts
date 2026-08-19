@@ -1,8 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: 'standalone',
   serverExternalPackages: ['sharp'],
-  outputFileTracing: false,
 };
 
 export default nextConfig;

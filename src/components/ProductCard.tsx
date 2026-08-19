@@ -7,6 +7,14 @@ type ProductWithImages = Product & { images: ProductImage[] };
 export default function ProductCard({ product }: { product: ProductWithImages }) {
   const mainImage = product.images.length > 0 ? product.images[0].url : null;
 
+  const cartons = product.unitsPerCarton > 1 ? Math.floor(product.stock / product.unitsPerCarton) : 0;
+  const remainingUnits = product.unitsPerCarton > 1 ? product.stock % product.unitsPerCarton : product.stock;
+  
+  const stockText = product.stock <= 0 ? 'Rupture' : 
+    (product.unitsPerCarton > 1 
+      ? (cartons > 0 ? `${cartons} casier(s)` : '') + (remainingUnits > 0 ? ` ${remainingUnits} btl` : '')
+      : `${product.stock} en stock`);
+
   return (
     <div className="glass-card">
       <div style={{ position: 'relative', width: '100%', height: '220px', backgroundColor: 'var(--slate-800)' }}>
@@ -19,7 +27,7 @@ export default function ProductCard({ product }: { product: ProductWithImages })
         )}
         <div style={{ position: 'absolute', top: '1rem', right: '1rem' }}>
           <span className={`badge ${product.stock > 0 ? 'badge-success' : 'badge-danger'}`} style={{ backdropFilter: 'blur(8px)' }}>
-            {product.stock > 0 ? `${product.stock} en stock` : 'Rupture'}
+            {stockText}
           </span>
         </div>
       </div>

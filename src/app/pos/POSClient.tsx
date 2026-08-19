@@ -64,6 +64,11 @@ export default function POSClient({
   // Checkout Modal State
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [amountReceived, setAmountReceived] = useState<string>('');
+  
+  // Makaya Specifics (Tables & Crédit)
+  const [tableName, setTableName] = useState('');
+  const [paymentStatus, setPaymentStatus] = useState('PAID');
+  const [orderStatus, setOrderStatus] = useState('CLOSED');
 
   const [todaySales, setTodaySales] = useState<number>(initialTodaySales || 0);
 
@@ -213,14 +218,29 @@ export default function POSClient({
         discountPercent: i.discountPercent 
       }));
       
-      const res = await processCheckout(payload, globalDiscount || 0, selectedCustomerId || undefined);
+      const res = await processCheckout(
+        payload, 
+        globalDiscount || 0, 
+        selectedCustomerId || undefined,
+        {
+          tableName: tableName || undefined,
+          status: orderStatus,
+          paymentStatus: paymentStatus,
+          paidAmount: parseFloat(amountReceived) || 0
+        }
+      );
       
       if (res.success && res.orderId) {
-        setTodaySales(prev => prev + totalTTC);
+        if (paymentStatus === 'PAID') {
+          setTodaySales(prev => prev + totalTTC);
+        }
         setCart([]);
         setGlobalDiscount(0);
         setSelectedCustomerId('');
         setAmountReceived('');
+        setTableName('');
+        setPaymentStatus('PAID');
+        setOrderStatus('CLOSED');
         setShowCheckoutModal(false);
         // Open invoice in new tab or navigate
         window.open(`/pos/invoice/${res.orderId}`, '_blank');
@@ -429,23 +449,59 @@ export default function POSClient({
               </select>
             </div>
 
-            <div className="form-group" style={{ marginBottom: '2rem' }}>
-              <label className="form-label">Espèces reçues (Calculateur monnaie)</label>
-              <input 
-                type="number" 
-                className="form-control" 
-                value={amountReceived} 
-                onChange={e => setAmountReceived(e.target.value)} 
-                placeholder="Ex: 10000"
-                style={{ fontSize: '1.5rem', fontWeight: 'bold' }}
-              />
-              {parseFloat(amountReceived) >= totalTTC && (
-                <div style={{ marginTop: '0.5rem', fontSize: '1.1rem', color: 'var(--success-color)', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', padding: '0.5rem', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderRadius: '6px' }}>
-                  <span>Monnaie à rendre :</span>
-                  <span>{(parseFloat(amountReceived) - totalTTC).toFixed(0)} FCFA</span>
-                </div>
-              )}
+            <div className="grid grid-cols-2">
+              <div className="form-group">
+                <label className="form-label">Table (Optionnel)</label>
+                <input 
+                  type="text" 
+                  className="form-control" 
+                  value={tableName} 
+                  onChange={e => setTableName(e.target.value)} 
+                  placeholder="Ex: Table 4, VIP"
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Statut Table</label>
+                <select className="form-control" value={orderStatus} onChange={e => setOrderStatus(e.target.value)}>
+                  <option value="CLOSED">Clôturée</option>
+                  <option value="OPEN">En Cours (Reste ouverte)</option>
+                </select>
+              </div>
             </div>
+
+            <div className="form-group">
+              <label className="form-label">Type de Paiement</label>
+              <select className="form-control" value={paymentStatus} onChange={e => setPaymentStatus(e.target.value)}>
+                <option value="PAID">Payé Comptant</option>
+                <option value="PARTIAL">Acompte (Partiel)</option>
+                <option value="CREDIT">Crédit (Ardoise complète)</option>
+              </select>
+            </div>
+
+            {paymentStatus !== 'CREDIT' && (
+              <div className="form-group" style={{ marginBottom: '2rem' }}>
+                <label className="form-label">Espèces reçues {paymentStatus === 'PARTIAL' ? '(Acompte)' : '(Calculateur)'}</label>
+                <input 
+                  type="number" 
+                  className="form-control" 
+                  value={amountReceived} 
+                  onChange={e => setAmountReceived(e.target.value)} 
+                  placeholder={paymentStatus === 'PARTIAL' ? "Montant de l'acompte" : "Ex: 10000"}
+                  style={{ fontSize: '1.5rem', fontWeight: 'bold' }}
+                />
+                {paymentStatus === 'PAID' && parseFloat(amountReceived) >= totalTTC && (
+                  <div style={{ marginTop: '0.5rem', fontSize: '1.1rem', color: 'var(--success-color)', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', padding: '0.5rem', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderRadius: '6px' }}>
+                    <span>Monnaie à rendre :</span>
+                    <span>{(parseFloat(amountReceived) - totalTTC).toFixed(0)} FCFA</span>
+                  </div>
+                )}
+                {paymentStatus === 'PARTIAL' && parseFloat(amountReceived) < totalTTC && parseFloat(amountReceived) > 0 && (
+                  <div style={{ marginTop: '0.5rem', fontSize: '0.9rem', color: 'var(--warning-color)' }}>
+                    Reste à payer (Dette) : {(totalTTC - parseFloat(amountReceived)).toFixed(0)} FCFA
+                  </div>
+                )}
+              </div>
+            )}
 
             {error && <div style={{ color: 'var(--danger-color)', marginBottom: '1rem', fontSize: '0.9rem' }}>{error}</div>}
 

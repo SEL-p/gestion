@@ -1,5 +1,6 @@
 import { getStoreSettings } from '@/actions/settings';
 import SettingsForm from './SettingsForm';
+import ExportButton from './ExportButton';
 
 export default async function SettingsPage() {
   const settings = await getStoreSettings();
@@ -14,6 +15,8 @@ export default async function SettingsPage() {
       <div className="glass-card" style={{ padding: '2rem', maxWidth: '600px' }}>
         <SettingsForm initialData={settings} />
       </div>
+
+      <ExportButton />
     </div>
   );
 }

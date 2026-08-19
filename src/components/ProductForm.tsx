@@ -37,26 +37,36 @@ export default function ProductForm() {
         <input type="text" name="name" required className="form-control" placeholder="T-shirt Noir" />
       </div>
 
-      <div className="grid grid-cols-3">
+      <div className="grid grid-cols-4">
         <div className="form-group">
           <label className="form-label">Catégorie *</label>
-          <input type="text" name="category" required className="form-control" placeholder="Vêtements" />
+          <input type="text" name="category" required className="form-control" placeholder="Bières, Sucreries..." />
         </div>
         
         <div className="form-group">
-          <label className="form-label">Stock initial *</label>
+          <label className="form-label">Unité par Casier</label>
+          <input type="number" name="unitsPerCarton" className="form-control" defaultValue="1" min="1" title="Ex: 24 pour un casier" />
+        </div>
+        
+        <div className="form-group">
+          <label className="form-label">Stock initial (en Unités) *</label>
           <input type="number" name="stock" required className="form-control" defaultValue="0" min="0" />
         </div>
 
         <div className="form-group">
           <label className="form-label">Seuil Alerte Stock *</label>
-          <input type="number" name="minStock" required className="form-control" defaultValue="5" min="1" title="Alerte si stock en dessous" />
+          <input type="number" name="minStock" required className="form-control" defaultValue="5" min="1" />
         </div>
       </div>
 
-      <div className="grid grid-cols-2">
+      <div className="grid grid-cols-3">
         <div className="form-group">
-          <label className="form-label">Prix HT *</label>
+          <label className="form-label">Prix d'achat</label>
+          <input type="number" step="0.01" name="purchasePrice" className="form-control" placeholder="0.00" />
+        </div>
+
+        <div className="form-group">
+          <label className="form-label">Prix de Vente (HT) *</label>
           <input type="number" step="0.01" name="priceHT" required className="form-control" placeholder="0.00" 
             onChange={(e) => {
               const ttcInput = document.getElementById('priceTTC') as HTMLInputElement;
@@ -68,7 +78,7 @@ export default function ProductForm() {
         </div>
         
         <div className="form-group">
-          <label className="form-label">Prix TTC *</label>
+          <label className="form-label">Prix de Vente (TTC) *</label>
           <input type="number" step="0.01" name="priceTTC" id="priceTTC" required className="form-control" placeholder="0.00" />
         </div>
       </div>

@@ -16,6 +16,8 @@ model Product {
   longDescription  String         @db.LongText
   priceHT          Float
   priceTTC         Float
+  purchasePrice    Float?         // Nouveau : prix d'achat pour calculer la marge
+  unitsPerCarton   Int            @default(1) // Nouveau : 24 pour un casier de bière
   stock            Int            @default(0)
   minStock         Int            @default(5)
   createdAt        DateTime       @default(now())
@@ -49,14 +51,16 @@ model Category {
 }
 
 model Customer {
-  id        String    @id @default(uuid())
-  name      String
-  phone     String?   @unique
-  points    Int       @default(0)
-  totalSpent Float    @default(0)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  orders    Order[]
+  id          String    @id @default(uuid())
+  name        String
+  phone       String?   @unique
+  points      Int       @default(0)
+  totalSpent  Float     @default(0)
+  debtBalance Float     @default(0) // Nouveau : Solde de l'ardoise (dette)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  orders      Order[]
+  payments    Payment[] // Nouveau : Historique des paiements de dettes
 }
 
 model CashSession {
@@ -71,19 +75,46 @@ model CashSession {
   actualClosingBalance   Float?
   difference             Float?
   createdAt              DateTime  @default(now())
+  expenses               Expense[] // Nouveau : Les petites dépenses associées à la caisse
+}
+
+model Expense {
+  id            String      @id @default(uuid())
+  amount        Float
+  reason        String
+  cashSessionId String
+  cashSession   CashSession @relation(fields: [cashSessionId], references: [id], onDelete: Cascade)
+  createdAt     DateTime    @default(now())
 }
 
 model Order {
-  id          String      @id @default(uuid())
-  totalHT     Float
-  totalTTC    Float
-  discount    Float       @default(0)
-  cashierName String      @default("Admin") // Qui a fait la vente
-  customerId  String?
-  customer    Customer?   @relation(fields: [customerId], references: [id])
-  createdAt   DateTime    @default(now())
-  items       OrderItem[]
-  returns     Return[]
+  id            String      @id @default(uuid())
+  totalHT       Float
+  totalTTC      Float
+  discount      Float       @default(0)
+  paidAmount    Float       @default(0) // Nouveau : Montant payé par le client
+  cashierName   String      @default("Admin") // Qui a fait la vente
+  tableName     String?     // Nouveau : "Table VIP", "Table 4" etc.
+  status        String      @default("CLOSED") // Nouveau : "OPEN" ou "CLOSED"
+  paymentStatus String      @default("PAID") // Nouveau : "PAID", "PARTIAL", "CREDIT"
+  customerId    String?
+  customer      Customer?   @relation(fields: [customerId], references: [id])
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt // Nouveau
+  items         OrderItem[]
+  returns       Return[]
+  payments      Payment[]   // Nouveau : Paiements ultérieurs sur cette commande
+}
+
+model Payment {
+  id         String   @id @default(uuid())
+  amount     Float
+  method     String   @default("CASH") // CASH, MOBILE_MONEY, etc.
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+  orderId    String?
+  order      Order?   @relation(fields: [orderId], references: [id])
+  createdAt  DateTime @default(now())
 }
 
 model OrderItem {

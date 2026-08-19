@@ -5,9 +5,10 @@ import Link from 'next/link';
 export default async function Home({
   searchParams,
 }: {
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const query = typeof searchParams.q === 'string' ? searchParams.q : '';
+  const params = await searchParams;
+  const query = typeof params.q === 'string' ? params.q : '';
 
   const products = await prisma.product.findMany({
     where: {

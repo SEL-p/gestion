@@ -19,6 +19,8 @@ export async function createProduct(formData: FormData) {
   const longDescription = formData.get('longDescription') as string;
   const priceHT = parseFloat(formData.get('priceHT') as string);
   const priceTTC = parseFloat(formData.get('priceTTC') as string);
+  const purchasePrice = parseFloat(formData.get('purchasePrice') as string) || null;
+  const unitsPerCarton = parseInt(formData.get('unitsPerCarton') as string, 10) || 1;
   const stock = parseInt(formData.get('stock') as string, 10);
   const minStock = parseInt(formData.get('minStock') as string, 10) || 5;
   
@@ -72,6 +74,8 @@ export async function createProduct(formData: FormData) {
       longDescription,
       priceHT,
       priceTTC,
+      purchasePrice,
+      unitsPerCarton,
       stock,
       minStock,
       images: {
