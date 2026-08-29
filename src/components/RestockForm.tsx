@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { updateStock } from '@/actions/product';
@@ -34,14 +34,14 @@ export default function RestockForm({ productId }: { productId: string }) {
         min="1" 
         value={quantity || ''} 
         onChange={e => setQuantity(parseInt(e.target.value) || 0)} 
-        placeholder="Qté à ajouter" 
+        placeholder="QtÃ© Ã  ajouter" 
         className="form-control" 
         style={{ width: '150px' }}
       />
       <button type="submit" className="btn btn-primary" disabled={loading || quantity <= 0}>
-        {loading ? '...' : 'Réapprovisionner'}
+        {loading ? '...' : 'RÃ©approvisionner'}
       </button>
-      {success && <span style={{ color: 'var(--success-color)', fontSize: '0.9rem' }}>Stock mis à jour !</span>}
+      {success && <span style={{ color: 'var(--success-color)', fontSize: '0.9rem' }}>Stock mis Ã  jour !</span>}
     </form>
   );
 }

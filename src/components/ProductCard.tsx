@@ -1,4 +1,4 @@
-import Image from 'next/image';
+﻿import Image from 'next/image';
 import Link from 'next/link';
 import { Product, ProductImage } from '@prisma/client';
 
@@ -22,7 +22,7 @@ export default function ProductCard({ product }: { product: ProductWithImages })
           <Image src={mainImage} alt={product.name} fill style={{ objectFit: 'cover' }} />
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--slate-500)', fontSize: '2rem' }}>
-            📦
+            ðŸ“¦
           </div>
         )}
         <div style={{ position: 'absolute', top: '1rem', right: '1rem' }}>
@@ -50,7 +50,7 @@ export default function ProductCard({ product }: { product: ProductWithImages })
         </div>
 
         <Link href={`/products/${product.id}`} className="btn btn-outline" style={{ width: '100%' }}>
-          Voir détails
+          Voir dÃ©tails
         </Link>
       </div>
     </div>

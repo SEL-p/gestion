@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -9,13 +9,13 @@ import { useTheme } from '@/components/ThemeProvider';
 
 export default function Sidebar({ userRole = 'admin', storeName = 'Boutique' }: { userRole?: string, storeName?: string }) {
   const pathname = usePathname();
-  const role = userRole; // derived directly from prop – no need for state
+  const role = userRole; // derived directly from prop â€“ no need for state
   const [alertsCount, setAlertsCount] = useState(0);
   const { theme, setTheme } = useTheme();
 
-  // Simulation: Un appel fetch réel devrait vérifier le nombre d'alertes de stock
+  // Simulation: Un appel fetch rÃ©el devrait vÃ©rifier le nombre d'alertes de stock
   useEffect(() => {
-    // on va implémenter un endpoint pour ça
+    // on va implÃ©menter un endpoint pour Ã§a
     fetch('/api/alerts/count')
       .then(res => res.json())
       .then(data => {
@@ -27,12 +27,12 @@ export default function Sidebar({ userRole = 'admin', storeName = 'Boutique' }: 
   const navItems = [
     { name: 'Dashboard', path: '/', icon: <Package size={20} />, roles: ['admin'] },
     { name: 'Catalogue', path: '/products', icon: <Package size={20} />, roles: ['admin', 'cashier'] },
-    { name: 'Gérer les Prix', path: '/prices', icon: <DollarSign size={20} />, roles: ['admin', 'manager'] },
-    { name: 'Catégories', path: '/categories', icon: <PlusCircle size={20} />, roles: ['admin'] },
+    { name: 'GÃ©rer les Prix', path: '/prices', icon: <DollarSign size={20} />, roles: ['admin', 'manager'] },
+    { name: 'CatÃ©gories', path: '/categories', icon: <PlusCircle size={20} />, roles: ['admin'] },
     { name: 'Clients', path: '/customers', icon: <Users size={20} />, roles: ['admin'] },
     { name: 'Historique', path: '/history', icon: <History size={20} />, roles: ['admin'] },
     { name: 'Caissiers', path: '/users', icon: <Users size={20} />, roles: ['admin'] },
-    { name: 'Paramètres', path: '/settings', icon: <Diamond size={20} />, roles: ['admin'] },
+    { name: 'ParamÃ¨tres', path: '/settings', icon: <Diamond size={20} />, roles: ['admin'] },
     { name: 'Alertes Stock', path: '/alerts', icon: alertsCount > 0 ? <AlertTriangle size={20} color="var(--danger-color)" /> : <CheckCircle size={20} color="var(--success-color)" />, roles: ['admin'], badge: alertsCount },
   ];
 
@@ -47,7 +47,7 @@ export default function Sidebar({ userRole = 'admin', storeName = 'Boutique' }: 
         </h2>
         
         {/* Mobile Logout Button (hidden on desktop via CSS) */}
-        <button onClick={() => logout()} className="btn btn-outline mobile-logout" style={{ padding: '0.4rem', borderRadius: '8px', border: '1px solid var(--slate-200)', color: 'var(--danger-color)', display: 'none' }} title="Déconnexion">
+        <button onClick={() => logout()} className="btn btn-outline mobile-logout" style={{ padding: '0.4rem', borderRadius: '8px', border: '1px solid var(--slate-200)', color: 'var(--danger-color)', display: 'none' }} title="DÃ©connexion">
           <LogOut size={18} />
         </button>
       </div>
@@ -136,18 +136,18 @@ export default function Sidebar({ userRole = 'admin', storeName = 'Boutique' }: 
           className="btn btn-outline" 
           style={{ width: '100%', justifyContent: 'center', display: 'flex', gap: '0.5rem', alignItems: 'center' }}
         >
-          {theme === 'system' && <><Sparkles size={18} color="#00796B" /> Thème: Auto (OS)</>}
-          {theme === 'light' && <><Sun size={18} /> Thème: Clair</>}
-          {theme === 'dark' && <><Moon size={18} /> Thème: Sombre</>}
-          {theme === 'high-contrast' && <><Eye size={18} /> Contraste Élevé</>}
+          {theme === 'system' && <><Sparkles size={18} color="#00796B" /> ThÃ¨me: Auto (OS)</>}
+          {theme === 'light' && <><Sun size={18} /> ThÃ¨me: Clair</>}
+          {theme === 'dark' && <><Moon size={18} /> ThÃ¨me: Sombre</>}
+          {theme === 'high-contrast' && <><Eye size={18} /> Contraste Ã‰levÃ©</>}
         </button>
 
         <button onClick={() => logout()} className="btn btn-outline" style={{ width: '100%', justifyContent: 'center', display: 'flex', gap: '0.5rem', alignItems: 'center', color: 'var(--danger-color)', borderColor: 'var(--slate-300)' }}>
-          <LogOut size={18} /> Déconnexion
+          <LogOut size={18} /> DÃ©connexion
         </button>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', color: 'var(--slate-500)', fontSize: '0.8rem' }}>
           <span>Version 2.5</span>
-          <span>•</span>
+          <span>â€¢</span>
           <span>Zeynarmarket</span>
         </div>
       </div>

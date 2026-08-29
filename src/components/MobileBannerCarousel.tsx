@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -18,7 +18,7 @@ interface BannerSlide {
 const defaultSlides: BannerSlide[] = [
   {
     id: 'promo-1',
-    badge: '⚡ CAISSE TACTILE',
+    badge: 'âš¡ CAISSE TACTILE',
     title: 'Encaissement Ultra-Rapide',
     subtitle: 'Scannez vos articles au code-barres et validez les tickets en 1 clic.',
     bgGradient: 'linear-gradient(135deg, #004D40 0%, #00796B 100%)',
@@ -28,9 +28,9 @@ const defaultSlides: BannerSlide[] = [
   },
   {
     id: 'promo-2',
-    badge: '🛍️ ARRIVAGES & RAYONS',
+    badge: 'ðŸ›ï¸ ARRIVAGES & RAYONS',
     title: 'Gestion des Rayons & Stocks',
-    subtitle: 'Suivez vos stocks en temps réel et recevez des alertes avant rupture.',
+    subtitle: 'Suivez vos stocks en temps rÃ©el et recevez des alertes avant rupture.',
     bgGradient: 'linear-gradient(135deg, #1E3A8A 0%, #3B82F6 100%)',
     accentColor: '#60A5FA',
     link: '/products',
@@ -38,7 +38,7 @@ const defaultSlides: BannerSlide[] = [
   },
   {
     id: 'promo-3',
-    badge: '⚠️ GESTION FLUIDE',
+    badge: 'âš ï¸ GESTION FLUIDE',
     title: 'Inventaire & Prix de Vente',
     subtitle: 'Ajustez vos prix, visualisez vos marges et configurez vos remises.',
     bgGradient: 'linear-gradient(135deg, #7C2D12 0%, #EA580C 100%)',
@@ -75,7 +75,7 @@ export default function MobileBannerCarousel() {
             <p className="carousel-subtitle small opacity-90 mb-3">{slide.subtitle}</p>
 
             <Link href={slide.link} className="carousel-action-btn btn btn-light rounded-pill btn-sm fw-bold shadow-sm d-inline-flex align-items-center gap-2 px-3 text-dark">
-              <span>Accéder</span>
+              <span>AccÃ©der</span>
               <ArrowRight size={16} />
             </Link>
           </div>
@@ -90,7 +90,7 @@ export default function MobileBannerCarousel() {
             type="button"
             className={`carousel-dot ${currentIndex === idx ? 'active' : ''}`}
             onClick={() => setCurrentIndex(idx)}
-            aria-label={`Aller à la slide ${idx + 1}`}
+            aria-label={`Aller Ã  la slide ${idx + 1}`}
           />
         ))}
       </div>

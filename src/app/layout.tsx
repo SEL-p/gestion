@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+﻿import type { Metadata } from 'next';
 import './globals.css';
 import ResponsiveNavigation from '@/components/ResponsiveNavigation';
 import { cookies } from 'next/headers';
@@ -16,7 +16,7 @@ export const viewport = {
 };
 
 export async function generateMetadata(): Promise<Metadata> {
-  let name = 'Supermarché POS';
+  let name = 'SupermarchÃ© POS';
   try {
     const settings = await prisma.storeSettings.findFirst();
     if (settings?.storeName) name = settings.storeName;
@@ -26,7 +26,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
   return {
     title: name,
-    description: `${name} - Logiciel de Caisse & Gestion Supermarché`,
+    description: `${name} - Logiciel de Caisse & Gestion SupermarchÃ©`,
   };
 }
 
@@ -39,7 +39,7 @@ export default async function RootLayout({
   const role = cookieStore.get('auth_role')?.value;
   const userName = cookieStore.get('auth_name')?.value || 'Admin';
 
-  let storeName = 'SUPERMARCHÉ ZEYNAR';
+  let storeName = 'SUPERMARCHÃ‰ ZEYNAR';
   try {
     const settings = await prisma.storeSettings.findFirst();
     if (settings?.storeName) {
