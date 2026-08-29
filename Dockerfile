@@ -1,0 +1,41 @@
+FROM node:20-alpine AS base
+
+FROM base AS deps
+RUN apk add --no-cache libc6-compat openssl
+WORKDIR /app
+COPY package.json package-lock.json* ./
+RUN npm install --no-audit --no-fund
+
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN npx prisma generate
+RUN npm run build
+
+FROM base AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+RUN apk add --no-cache openssl
+
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+
+# Les migrations ne sont pas exécutées automatiquement au démarrage.
+# En production, ne jamais utiliser db push --accept-data-loss sans sauvegarde.
+RUN printf '%s\n' '#!/bin/sh' 'set -eu' 'exec node server.js' > /app/start.sh \
+    && chmod +x /app/start.sh \
+    && chown nextjs:nodejs /app/start.sh
+
+USER nextjs
+
+EXPOSE 3000
+CMD ["/app/start.sh"]

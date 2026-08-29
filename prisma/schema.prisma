@@ -1,0 +1,153 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Product {
+  id               String         @id @default(uuid())
+  sku              String         @unique
+  name             String
+  category         String
+  shortDescription String         @db.Text
+  longDescription  String         @db.LongText
+  priceHT          Float
+  priceTTC         Float
+  purchasePrice    Float?         // Nouveau : prix d'achat pour calculer la marge
+  unitsPerCarton   Int            @default(1) // Nouveau : 24 pour un casier de bière
+  stock            Int            @default(0)
+  minStock         Int            @default(5)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  images           ProductImage[]
+  orderItems       OrderItem[]
+  returns          Return[]
+}
+
+model ProductImage {
+  id        String   @id @default(uuid())
+  url       String
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model StoreSettings {
+  id             String   @id @default(uuid())
+  storeName      String   @default("ZEYNARMARKET")
+  address        String   @default("123 Rue du Commerce, Ville")
+  phone          String   @default("+225 00 00 00 00")
+  receiptMessage String   @default("Merci de votre visite et à bientôt !")
+  updatedAt      DateTime @updatedAt
+}
+
+model Category {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  createdAt DateTime  @default(now())
+}
+
+model Customer {
+  id          String    @id @default(uuid())
+  code        String?   @unique // Code unique d'identification client (ex: CLT-1001 ou N° Carte)
+  name        String
+  phone       String?   @unique
+  points      Int       @default(0)
+  totalSpent  Float     @default(0)
+  debtBalance Float     @default(0) // Nouveau : Solde de l'ardoise (dette)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  orders      Order[]
+  payments    Payment[] // Nouveau : Historique des paiements de dettes
+}
+
+model CashSession {
+  id                     String    @id @default(uuid())
+  cashierId              String
+  cashierName            String
+  status                 String    @default("OPEN") // OPEN ou CLOSED
+  startTime              DateTime  @default(now())
+  endTime                DateTime?
+  openingBalance         Float     @default(0)
+  expectedClosingBalance Float?
+  actualClosingBalance   Float?
+  difference             Float?
+  createdAt              DateTime  @default(now())
+  expenses               Expense[] // Nouveau : Les petites dépenses associées à la caisse
+}
+
+model Expense {
+  id            String      @id @default(uuid())
+  amount        Float
+  reason        String
+  cashSessionId String
+  cashSession   CashSession @relation(fields: [cashSessionId], references: [id], onDelete: Cascade)
+  createdAt     DateTime    @default(now())
+}
+
+model Order {
+  id            String      @id @default(uuid())
+  totalHT       Float
+  totalTTC      Float
+  discount      Float       @default(0)
+  paidAmount    Float       @default(0) // Nouveau : Montant payé par le client
+  cashierName   String      @default("Admin") // Qui a fait la vente
+  tableName     String?     // Nouveau : "Table VIP", "Table 4" etc.
+  status        String      @default("CLOSED") // Nouveau : "OPEN" ou "CLOSED"
+  paymentStatus String      @default("PAID") // Nouveau : "PAID", "PARTIAL", "CREDIT"
+  customerId    String?
+  customer      Customer?   @relation(fields: [customerId], references: [id])
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt // Nouveau
+  items         OrderItem[]
+  returns       Return[]
+  payments      Payment[]   // Nouveau : Paiements ultérieurs sur cette commande
+}
+
+model Payment {
+  id         String   @id @default(uuid())
+  amount     Float
+  method     String   @default("CASH") // CASH, MOBILE_MONEY, etc.
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+  orderId    String?
+  order      Order?   @relation(fields: [orderId], references: [id])
+  createdAt  DateTime @default(now())
+}
+
+model OrderItem {
+  id        String   @id @default(uuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int
+  priceHT   Float
+  priceTTC  Float
+  discount  Float    @default(0)
+}
+
+model Return {
+  id          String   @id @default(uuid())
+  orderId     String?
+  order       Order?   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  quantity    Int
+  amountTTC   Float
+  reason      String?
+  approvedBy  String   // Nom de l'admin qui a approuvé via son PIN
+  createdAt   DateTime @default(now())
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  pin       String   @unique
+  role      String   @default("cashier")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
