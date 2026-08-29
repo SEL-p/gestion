@@ -20,7 +20,10 @@ function getInitialTheme(): Theme {
 
 function resolveEffective(t: Theme): 'light' | 'dark' | 'high-contrast' {
   if (t === 'system') {
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    if (typeof window !== 'undefined') {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    return 'light'; // Default for SSR
   }
   return t;
 }
