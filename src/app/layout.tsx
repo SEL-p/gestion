@@ -8,6 +8,13 @@ import { Inter } from 'next/font/google';
 
 const inter = Inter({ subsets: ['latin'] });
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
+
 export async function generateMetadata(): Promise<Metadata> {
   let name = 'Supermarché POS';
   try {
@@ -20,7 +27,6 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: name,
     description: `${name} - Logiciel de Caisse & Gestion Supermarché`,
-    viewport: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0',
   };
 }
 
