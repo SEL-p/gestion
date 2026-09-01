@@ -1,4 +1,4 @@
-﻿import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
 import {
   Package,
@@ -109,10 +109,10 @@ export default async function DashboardPage() {
         <header className="dashboard-header">
           <div>
             <h1 className="dashboard-title">
-              Tableau de bord SupermarchÃ©
+              Tableau de bord Supermarché
             </h1>
             <p className="dashboard-subtitle">
-              Gestion des rayons, encaissements et stocks en temps rÃ©el.
+              Gestion des rayons, encaissements et stocks en temps réel.
             </p>
           </div>
           <div className="dashboard-header-actions">
@@ -130,7 +130,7 @@ export default async function DashboardPage() {
               }}
             >
               <ShoppingBag size={20} />
-              AccÃ©der Ã  la Caisse
+              Accéder à la Caisse
             </Link>
           </div>
         </header>
@@ -166,7 +166,7 @@ export default async function DashboardPage() {
               </div>
             </div>
             <div className="kpi-value">{todayOrders.length}</div>
-            <div className="kpi-footer">Ã‰mis aujourd'hui</div>
+            <div className="kpi-footer">Émis aujourd'hui</div>
           </div>
 
           <div className="glass-card kpi-card kpi-returns">
@@ -181,7 +181,7 @@ export default async function DashboardPage() {
               <span className="kpi-currency">FCFA</span>
             </div>
             <div className="kpi-footer text-danger">
-              {todayReturnsQty} article(s) retournÃ©(s)
+              {todayReturnsQty} article(s) retourné(s)
             </div>
           </div>
 
@@ -213,7 +213,7 @@ export default async function DashboardPage() {
                 <thead>
                   <tr>
                     <th style={{ textAlign: 'left' }}>Article</th>
-                    <th style={{ textAlign: 'center' }}>QuantitÃ©</th>
+                    <th style={{ textAlign: 'center' }}>Quantité</th>
                     <th style={{ textAlign: 'right' }}>Revenus</th>
                   </tr>
                 </thead>
@@ -236,7 +236,7 @@ export default async function DashboardPage() {
                     <tr>
                       <td colSpan={3} className="empty-table-cell">
                         <Box size={40} style={{ margin: '0 auto 1rem auto', opacity: 0.5 }} />
-                        Aucune vente enregistrÃ©e pour le moment.
+                        Aucune vente enregistrée pour le moment.
                       </td>
                     </tr>
                   )}
@@ -280,7 +280,7 @@ export default async function DashboardPage() {
                 </div>
                 <div className="shortcut-info">
                   <div className="shortcut-title">Clients & Ardoises / Dettes</div>
-                  <div className="shortcut-desc">GÃ©rer la fidÃ©litÃ© et les paiements</div>
+                  <div className="shortcut-desc">Gérer la fidélité et les paiements</div>
                 </div>
                 <ArrowRight size={18} className="shortcut-arrow" />
               </Link>

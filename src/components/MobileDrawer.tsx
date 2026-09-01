@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useEffect } from 'react';
 import Link from 'next/link';
@@ -38,7 +38,7 @@ interface MobileDrawerProps {
 export default function MobileDrawer({
   isOpen,
   onClose,
-  storeName = 'SUPERMARCHÃ‰ ZEYNAR',
+  storeName = 'SUPERMARCHÉ ZEYNAR',
   userRole = 'admin',
   alertsCount = 0,
 }: MobileDrawerProps) {
@@ -128,7 +128,7 @@ export default function MobileDrawer({
               <div className="drawer-icon-wrap icon-prices">
                 <DollarSign size={18} />
               </div>
-              <span className="drawer-item-label">GÃ©rer mes prix</span>
+              <span className="drawer-item-label">Gérer mes prix</span>
               <ChevronRight size={16} className="drawer-chevron" />
             </Link>
 
@@ -140,7 +140,7 @@ export default function MobileDrawer({
                 <Package size={18} />
               </div>
               <span className="drawer-item-label">
-                GÃ©rer mes stocks
+                Gérer mes stocks
                 {alertsCount > 0 && (
                   <span className="drawer-badge-danger">{alertsCount}</span>
                 )}
@@ -156,7 +156,7 @@ export default function MobileDrawer({
                 <Tag size={18} />
               </div>
               <span className="drawer-item-label">
-                CatÃ©gories & Promotions <span className="tag-badge">ðŸ›¡ï¸</span>
+                Catégories & Promotions <span className="tag-badge">🛡️</span>
               </span>
               <ChevronRight size={16} className="drawer-chevron" />
             </Link>
@@ -168,7 +168,7 @@ export default function MobileDrawer({
               <div className="drawer-icon-wrap icon-customers">
                 <Users size={18} />
               </div>
-              <span className="drawer-item-label">Clients & FidÃ©litÃ©</span>
+              <span className="drawer-item-label">Clients & Fidélité</span>
               <ChevronRight size={16} className="drawer-chevron" />
             </Link>
           </div>
@@ -199,7 +199,7 @@ export default function MobileDrawer({
               <div className="drawer-icon-wrap icon-history">
                 <Receipt size={18} />
               </div>
-              <span className="drawer-item-label">Ã‰tat des factures & Tickets</span>
+              <span className="drawer-item-label">État des factures & Tickets</span>
               <ChevronRight size={16} className="drawer-chevron" />
             </Link>
 
@@ -223,7 +223,7 @@ export default function MobileDrawer({
                   <div className="drawer-icon-wrap icon-settings">
                     <Settings size={18} />
                   </div>
-                  <span className="drawer-item-label">ParamÃ¨tres du Magasin</span>
+                  <span className="drawer-item-label">Paramètres du Magasin</span>
                   <ChevronRight size={16} className="drawer-chevron" />
                 </Link>
               </>
@@ -254,14 +254,14 @@ export default function MobileDrawer({
               type="button"
               onClick={() => logout()}
               className="drawer-btn-logout"
-              title="DÃ©connexion"
+              title="Déconnexion"
             >
               <LogOut size={16} />
             </button>
           </div>
 
           <div className="drawer-version-pill">
-            Version 2.5 (SupermarchÃ©)
+            Version 2.5 (Supermarché)
           </div>
         </div>
       </aside>

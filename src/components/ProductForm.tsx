@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
 import { createProduct } from '@/actions/product';
@@ -33,14 +33,14 @@ interface ProductFormProps {
 }
 
 const QUICK_TAGS = [
-  'â„ï¸ Rayon Frais',
-  'ðŸ·ï¸ ConsignÃ©',
-  'ðŸŒŸ Produit Local',
-  'ðŸ”¥ Promotion',
-  'ðŸ“¦ Format Familial',
-  'âš¡ Vente Rapide',
-  'ðŸ¥› Laitier',
-  'ðŸ¥¤ Boisson',
+  '❄️ Rayon Frais',
+  '🏷️ Consigné',
+  '🌟 Produit Local',
+  '🔥 Promotion',
+  '📦 Format Familial',
+  '⚡ Vente Rapide',
+  '🥛 Laitier',
+  '🥤 Boisson',
 ];
 
 export default function ProductForm({ existingCategories = [] }: ProductFormProps) {
@@ -173,7 +173,7 @@ export default function ProductForm({ existingCategories = [] }: ProductFormProp
     } catch (err: any) {
       console.error('Camera access error:', err);
       setCameraError(
-        'Impossible dâ€™accÃ©der Ã  la camÃ©ra. VÃ©rifiez les autorisations de votre navigateur ou utilisez lâ€™appareil photo natif.'
+        'Impossible d’accéder à la caméra. Vérifiez les autorisations de votre navigateur ou utilisez l’appareil photo natif.'
       );
     }
   };
@@ -251,14 +251,14 @@ export default function ProductForm({ existingCategories = [] }: ProductFormProp
         if (volumeSize) parts.push(volumeSize);
         if (aisleLocation) parts.push(`Rayon: ${aisleLocation}`);
         if (selectedTags.length > 0) parts.push(selectedTags.join(' '));
-        finalShortDesc = parts.join(' â€¢ ');
+        finalShortDesc = parts.join(' • ');
       }
       formData.set('shortDescription', finalShortDesc);
 
       // Build detailed long description
       let finalLongDesc = longDescription;
       if (brand || aisleLocation || selectedTags.length > 0) {
-        const metaSummary = `[DÃ©tails SupermarchÃ©]\nMarque: ${brand || 'N/A'}\nFormat: ${volumeSize || 'Standard'}\nEmplacement: ${aisleLocation || 'Non spÃ©cifiÃ©'}\nTags: ${selectedTags.join(', ') || 'Aucun'}\n\n`;
+        const metaSummary = `[Détails Supermarché]\nMarque: ${brand || 'N/A'}\nFormat: ${volumeSize || 'Standard'}\nEmplacement: ${aisleLocation || 'Non spécifié'}\nTags: ${selectedTags.join(', ') || 'Aucun'}\n\n`;
         finalLongDesc = metaSummary + (longDescription || '');
       }
       formData.set('longDescription', finalLongDesc);
@@ -271,13 +271,13 @@ export default function ProductForm({ existingCategories = [] }: ProductFormProp
 
       await createProduct(formData);
     } catch (err: any) {
-      setError(err.message || 'Une erreur est survenue lors de la crÃ©ation.');
+      setError(err.message || 'Une erreur est survenue lors de la création.');
       setLoading(false);
     }
   };
 
   // Formatted preview summary for live shelf tag
-  const displaySummary = shortDescription || [brand, volumeSize, aisleLocation].filter(Boolean).join(' â€¢ ');
+  const displaySummary = shortDescription || [brand, volumeSize, aisleLocation].filter(Boolean).join(' • ');
 
   return (
     <div className="product-form-layout">
@@ -286,19 +286,19 @@ export default function ProductForm({ existingCategories = [] }: ProductFormProp
         <form onSubmit={handleSubmit} className="product-form-card">
           <div className="form-card-header">
             <div>
-              <h2 className="form-card-title">Fiche Article SupermarchÃ©</h2>
+              <h2 className="form-card-title">Fiche Article Supermarché</h2>
               <p className="form-card-subtitle">
-                Remplissez les dÃ©tails du produit pour l'enregistrer dans les rayons et en caisse.
+                Remplissez les détails du produit pour l'enregistrer dans les rayons et en caisse.
               </p>
             </div>
             <button
               type="button"
               onClick={generateSku}
               className="btn btn-outline btn-sm sku-quick-gen-btn"
-              title="GÃ©nÃ©rer un code rÃ©fÃ©rence alÃ©atoire"
+              title="Générer un code référence aléatoire"
             >
               <Barcode size={16} />
-              <span>GÃ©nÃ©rer RÃ©f.</span>
+              <span>Générer Réf.</span>
             </button>
           </div>
 
@@ -326,7 +326,7 @@ export default function ProductForm({ existingCategories = [] }: ProductFormProp
                   name="name"
                   required
                   className="form-control form-control-lg"
-                  placeholder="Ex: Riz ParfumÃ© Jasmin 5kg, Huile VÃ©gÃ©tale Dinor 1L..."
+                  placeholder="Ex: Riz Parfumé Jasmin 5kg, Huile Végétale Dinor 1L..."
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                 />
@@ -334,7 +334,7 @@ export default function ProductForm({ existingCategories = [] }: ProductFormProp
 
               <div className="form-group">
                 <label className="form-label">
-                  Code-barres / RÃ©fÃ©rence (SKU) <span className="text-req">*</span>
+                  Code-barres / Référence (SKU) <span className="text-req">*</span>
                 </label>
                 <div className="input-with-action">
                   <input
@@ -350,7 +350,7 @@ export default function ProductForm({ existingCategories = [] }: ProductFormProp
                     type="button"
                     onClick={generateSku}
                     className="input-action-btn"
-                    title="GÃ©nÃ©rer automatiquement"
+                    title="Générer automatiquement"
                   >
                     <RefreshCw size={15} />
                   </button>
@@ -359,7 +359,7 @@ export default function ProductForm({ existingCategories = [] }: ProductFormProp
 
               <div className="form-group">
                 <label className="form-label">
-                  Rayon / CatÃ©gorie <span className="text-req">*</span>
+                  Rayon / Catégorie <span className="text-req">*</span>
                 </label>
                 <input
                   list="category-suggestions"
@@ -367,7 +367,7 @@ export default function ProductForm({ existingCategories = [] }: ProductFormProp
                   name="category"
                   required
                   className="form-control"
-                  placeholder="SÃ©lectionnez ou tapez..."
+                  placeholder="Sélectionnez ou tapez..."
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
                 />
@@ -399,7 +399,7 @@ export default function ProductForm({ existingCategories = [] }: ProductFormProp
           <div className="form-section">
             <div className="form-section-title">
               <DollarSign size={18} className="section-icon" />
-              <span>2. Tarification & Marges BÃ©nÃ©ficiaires</span>
+              <span>2. Tarification & Marges Bénéficiaires</span>
             </div>
 
             <div className="form-grid grid-3">
@@ -456,16 +456,16 @@ export default function ProductForm({ existingCategories = [] }: ProductFormProp
                 <div className="margin-card-left">
                   <TrendingUp size={20} />
                   <div>
-                    <div className="margin-card-label">Marge Brute EstimÃ©e</div>
+                    <div className="margin-card-label">Marge Brute Estimée</div>
                     <div className="margin-card-value">
                       {marginAmount >= 0 ? '+' : ''}
-                      {marginAmount.toLocaleString('fr-FR')} FCFA / unitÃ©
+                      {marginAmount.toLocaleString('fr-FR')} FCFA / unité
                     </div>
                   </div>
                 </div>
                 <div className="margin-card-right">
                   <span className="margin-badge">
-                    {numPurchase > 0 ? `${marginRate.toFixed(1)}% de marge` : 'Prix dâ€™achat non renseignÃ©'}
+                    {numPurchase > 0 ? `${marginRate.toFixed(1)}% de marge` : 'Prix d’achat non renseigné'}
                   </span>
                 </div>
               </div>
@@ -513,7 +513,7 @@ export default function ProductForm({ existingCategories = [] }: ProductFormProp
               </div>
 
               <div className="form-group">
-                <label className="form-label">UnitÃ©s par Carton / Casier</label>
+                <label className="form-label">Unités par Carton / Casier</label>
                 <input
                   type="number"
                   name="unitsPerCarton"
@@ -527,7 +527,7 @@ export default function ProductForm({ existingCategories = [] }: ProductFormProp
             </div>
           </div>
 
-          {/* Section 4: Photos & Visuels avec option CamÃ©ra */}
+          {/* Section 4: Photos & Visuels avec option Caméra */}
           <div className="form-section">
             <div className="form-section-title">
               <ImageIcon size={18} className="section-icon" />
@@ -544,7 +544,7 @@ export default function ProductForm({ existingCategories = [] }: ProductFormProp
                 <Camera size={24} className="action-icon" />
                 <div className="action-btn-text">
                   <strong>Prendre une Photo</strong>
-                  <span>Ouvrir la camÃ©ra en direct</span>
+                  <span>Ouvrir la caméra en direct</span>
                 </div>
               </button>
 
@@ -556,7 +556,7 @@ export default function ProductForm({ existingCategories = [] }: ProductFormProp
                 <Smartphone size={24} className="action-icon" />
                 <div className="action-btn-text">
                   <strong>Appareil Photo Mobile</strong>
-                  <span>DÃ©clencher lâ€™appareil photo</span>
+                  <span>Déclencher l’appareil photo</span>
                 </div>
               </button>
 
@@ -596,7 +596,7 @@ export default function ProductForm({ existingCategories = [] }: ProductFormProp
               <div className="image-previews-grid">
                 {imagePreviews.map((previewUrl, idx) => (
                   <div key={idx} className="preview-item">
-                    <img src={previewUrl} alt={`AperÃ§u ${idx + 1}`} className="preview-img" />
+                    <img src={previewUrl} alt={`Aperçu ${idx + 1}`} className="preview-img" />
                     <button
                       type="button"
                       onClick={() => removeImage(idx)}
@@ -611,7 +611,7 @@ export default function ProductForm({ existingCategories = [] }: ProductFormProp
             )}
           </div>
 
-          {/* Section 5: Description & DÃ©tails SupermarchÃ© (Refonte Pro & Modulaire) */}
+          {/* Section 5: Description & Détails Supermarché (Refonte Pro & Modulaire) */}
           <div className="form-section section-details-enhanced">
             <div
               className="form-section-title clickable-title"
@@ -619,7 +619,7 @@ export default function ProductForm({ existingCategories = [] }: ProductFormProp
             >
               <div className="title-left">
                 <Layers size={18} className="section-icon" />
-                <span>5. Informations ComplÃ©mentaires & Emplacement</span>
+                <span>5. Informations Complémentaires & Emplacement</span>
                 <span className="badge badge-optional">Optionnel</span>
               </div>
               <div className="title-toggle-icon">
@@ -639,7 +639,7 @@ export default function ProductForm({ existingCategories = [] }: ProductFormProp
                     <input
                       type="text"
                       className="form-control"
-                      placeholder="Ex: NestlÃ©, Coca-Cola, Dinor..."
+                      placeholder="Ex: Nestlé, Coca-Cola, Dinor..."
                       value={brand}
                       onChange={(e) => setBrand(e.target.value)}
                     />
@@ -667,7 +667,7 @@ export default function ProductForm({ existingCategories = [] }: ProductFormProp
                     <input
                       type="text"
                       className="form-control"
-                      placeholder="Ex: AllÃ©e 2 - Ã‰tagÃ¨re B, TÃªte gondole..."
+                      placeholder="Ex: Allée 2 - Étagère B, Tête gondole..."
                       value={aisleLocation}
                       onChange={(e) => setAisleLocation(e.target.value)}
                     />
@@ -678,7 +678,7 @@ export default function ProductForm({ existingCategories = [] }: ProductFormProp
                 <div className="form-group">
                   <label className="form-label flex-label">
                     <Tag size={15} color="#00796B" />
-                    <span>Tags & CaractÃ©ristiques rapides</span>
+                    <span>Tags & Caractéristiques rapides</span>
                   </label>
                   <div className="quick-tags-container">
                     {QUICK_TAGS.map((tag) => {
@@ -708,7 +708,7 @@ export default function ProductForm({ existingCategories = [] }: ProductFormProp
                       type="text"
                       name="shortDescription"
                       className="form-control"
-                      placeholder="GÃ©nÃ©rÃ© automatiquement si vide (Marque, format...)"
+                      placeholder="Généré automatiquement si vide (Marque, format...)"
                       value={shortDescription}
                       onChange={(e) => setShortDescription(e.target.value)}
                     />
@@ -722,7 +722,7 @@ export default function ProductForm({ existingCategories = [] }: ProductFormProp
                       name="longDescription"
                       className="form-control"
                       rows={2}
-                      placeholder="Ex: VÃ©rifier la date d'expiration, consigne bouteille 100 FCFA..."
+                      placeholder="Ex: Vérifier la date d'expiration, consigne bouteille 100 FCFA..."
                       value={longDescription}
                       onChange={(e) => setLongDescription(e.target.value)}
                     />
@@ -767,7 +767,7 @@ export default function ProductForm({ existingCategories = [] }: ProductFormProp
         <div className="preview-sticky-card">
           <div className="preview-card-header">
             <Sparkles size={16} color="#00796B" />
-            <span>AperÃ§u Ã‰tiquette & Caisse</span>
+            <span>Aperçu Étiquette & Caisse</span>
           </div>
 
           <div className="preview-product-card">
@@ -775,7 +775,7 @@ export default function ProductForm({ existingCategories = [] }: ProductFormProp
               {imagePreviews.length > 0 ? (
                 <img
                   src={imagePreviews[0]}
-                  alt="AperÃ§u produit"
+                  alt="Aperçu produit"
                   className="preview-card-image"
                 />
               ) : (
@@ -845,11 +845,11 @@ export default function ProductForm({ existingCategories = [] }: ProductFormProp
           <div className="preview-tips-card">
             <div className="tip-item">
               <CheckCircle size={14} color="#10B981" />
-              <span>Visible instantanÃ©ment sur la caisse tactile POS.</span>
+              <span>Visible instantanément sur la caisse tactile POS.</span>
             </div>
             <div className="tip-item">
               <CheckCircle size={14} color="#10B981" />
-              <span>Alerte automatique dÃ¨s que le stock descend Ã  {minStock} unitÃ©s.</span>
+              <span>Alerte automatique dès que le stock descend à {minStock} unités.</span>
             </div>
           </div>
         </div>
@@ -873,7 +873,7 @@ export default function ProductForm({ existingCategories = [] }: ProductFormProp
                 type="button"
                 onClick={stopCamera}
                 className="camera-close-btn"
-                aria-label="Fermer la camÃ©ra"
+                aria-label="Fermer la caméra"
               >
                 <X size={20} />
               </button>
@@ -888,7 +888,7 @@ export default function ProductForm({ existingCategories = [] }: ProductFormProp
                   onClick={() => startCamera(facingMode)}
                   className="btn btn-primary btn-sm"
                 >
-                  RÃ©essayer
+                  Réessayer
                 </button>
               </div>
             ) : (
@@ -910,7 +910,7 @@ export default function ProductForm({ existingCategories = [] }: ProductFormProp
                     type="button"
                     onClick={switchCameraFacing}
                     className="camera-icon-action-btn"
-                    title="Changer de camÃ©ra (avant/arriÃ¨re)"
+                    title="Changer de caméra (avant/arrière)"
                   >
                     <RotateCcw size={20} />
                   </button>

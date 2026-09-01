@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
@@ -99,9 +99,9 @@ export default function ProductCatalogClient({
       {/* Top Header */}
       <div className="catalog-header-bar">
         <div>
-          <h1 className="catalog-title">Catalogue & Rayons SupermarchÃ©</h1>
+          <h1 className="catalog-title">Catalogue & Rayons Supermarché</h1>
           <p className="catalog-subtitle">
-            GÃ©rez vos rÃ©fÃ©rences articles, contrÃ´lez les stocks et prÃ©parez vos rayons.
+            Gérez vos références articles, contrôlez les stocks et préparez vos rayons.
           </p>
         </div>
         <div className="catalog-actions-group">
@@ -123,7 +123,7 @@ export default function ProductCatalogClient({
             <Package size={22} />
           </div>
           <div>
-            <div className="kpi-label">RÃ©fÃ©rences Totales</div>
+            <div className="kpi-label">Références Totales</div>
             <div className="kpi-value">{totalArticles} articles</div>
           </div>
         </div>
@@ -135,7 +135,7 @@ export default function ProductCatalogClient({
           <div>
             <div className="kpi-label">Stock Critique / Ruptures</div>
             <div className="kpi-value text-danger">
-              {outOfStockCount + lowStockCount} rÃ©fÃ©rences
+              {outOfStockCount + lowStockCount} références
             </div>
           </div>
         </div>
@@ -158,7 +158,7 @@ export default function ProductCatalogClient({
             <Search size={18} className="search-icon" />
             <input
               type="text"
-              placeholder="Rechercher par nom, rÃ©fÃ©rence SKU, code-barres, rayon..."
+              placeholder="Rechercher par nom, référence SKU, code-barres, rayon..."
               className="toolbar-search-input"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -169,7 +169,7 @@ export default function ProductCatalogClient({
                 className="clear-search-btn"
                 onClick={() => setSearchQuery('')}
               >
-                Ã—
+                ×
               </button>
             )}
           </div>
@@ -237,8 +237,8 @@ export default function ProductCatalogClient({
           <div className="empty-icon-wrap">
             <ShoppingBag size={48} />
           </div>
-          <h3>Aucun article ne correspond Ã  votre recherche</h3>
-          <p>Essayez de modifier vos filtres ou ajoutez une nouvelle rÃ©fÃ©rence.</p>
+          <h3>Aucun article ne correspond à votre recherche</h3>
+          <p>Essayez de modifier vos filtres ou ajoutez une nouvelle référence.</p>
           <div className="empty-actions">
             <button
               type="button"
@@ -249,11 +249,11 @@ export default function ProductCatalogClient({
                 setStockFilter('all');
               }}
             >
-              RÃ©initialiser les filtres
+              Réinitialiser les filtres
             </button>
             <Link href="/products/new" className="btn btn-primary btn-sm">
               <Plus size={16} />
-              <span>CrÃ©er un article</span>
+              <span>Créer un article</span>
             </Link>
           </div>
         </div>
@@ -348,7 +348,7 @@ export default function ProductCatalogClient({
                     <Link
                       href="/pos"
                       className="btn-card-action btn-sell"
-                      title="Vendre Ã  la caisse"
+                      title="Vendre à la caisse"
                     >
                       <ShoppingBag size={15} />
                       <span>Caisse</span>

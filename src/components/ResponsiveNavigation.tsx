@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
@@ -14,7 +14,7 @@ interface ResponsiveNavigationProps {
 
 export default function ResponsiveNavigation({
   userRole = 'admin',
-  storeName = 'SUPERMARCHÃ‰ ZEYNAR',
+  storeName = 'SUPERMARCHÉ ZEYNAR',
   userName = 'Admin',
 }: ResponsiveNavigationProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);

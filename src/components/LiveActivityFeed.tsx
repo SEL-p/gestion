@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import Link from 'next/link';
@@ -40,7 +40,7 @@ export default function LiveActivityFeed({
   return (
     <div className="activity-feed-section">
       <div className="activity-feed-header d-flex align-items-center justify-content-between mb-2">
-        <h3 className="activity-feed-title fs-6 fw-bold text-dark m-0">ActualitÃ©s & ActivitÃ©s en direct</h3>
+        <h3 className="activity-feed-title fs-6 fw-bold text-dark m-0">Actualités & Activités en direct</h3>
         <span className="activity-feed-badge badge rounded-pill bg-success-subtle text-success border border-success-subtle fw-bold px-2 py-1">EN DIRECT</span>
       </div>
 
@@ -61,7 +61,7 @@ export default function LiveActivityFeed({
               </p>
               <div className="activity-card-meta">
                 <Clock size={12} />
-                <span>Action recommandÃ©e : RÃ©approvisionner</span>
+                <span>Action recommandée : Réapprovisionner</span>
               </div>
             </div>
             <ChevronRight size={18} className="activity-card-chevron" />
@@ -72,9 +72,9 @@ export default function LiveActivityFeed({
               <Sparkles size={22} color="#059669" />
             </div>
             <div className="activity-card-content">
-              <div className="activity-card-title">Tous les stocks sont Ã  niveau</div>
+              <div className="activity-card-title">Tous les stocks sont à niveau</div>
               <p className="activity-card-desc">
-                Aucune rupture critique dÃ©tectÃ©e dans vos rayons actuellement.
+                Aucune rupture critique détectée dans vos rayons actuellement.
               </p>
             </div>
           </div>
@@ -90,11 +90,11 @@ export default function LiveActivityFeed({
               Chiffre du jour : {todayRevenue.toLocaleString('fr-FR')} FCFA
             </div>
             <p className="activity-card-desc">
-              {recentOrders.length} ticket(s) de caisse Ã©mis aujourd'hui.
+              {recentOrders.length} ticket(s) de caisse émis aujourd'hui.
             </p>
             <div className="activity-card-meta">
               <Clock size={12} />
-              <span>Mis Ã  jour en temps rÃ©el</span>
+              <span>Mis à jour en temps réel</span>
             </div>
           </div>
           <ChevronRight size={18} className="activity-card-chevron" />
@@ -119,14 +119,14 @@ export default function LiveActivityFeed({
               </div>
               <div className="activity-card-content">
                 <div className="activity-card-title">
-                  Vente #{order.id.slice(0, 8).toUpperCase()} â€¢ {order.totalTTC.toLocaleString('fr-FR')} FCFA
+                  Vente #{order.id.slice(0, 8).toUpperCase()} • {order.totalTTC.toLocaleString('fr-FR')} FCFA
                 </div>
                 <p className="activity-card-desc">
                   Caissier : {order.cashierName || 'Caisse Principale'}
                 </p>
                 <div className="activity-card-meta">
                   <Clock size={12} />
-                  <span>Aujourd'hui Ã  {timeStr}</span>
+                  <span>Aujourd'hui à {timeStr}</span>
                 </div>
               </div>
               <ChevronRight size={18} className="activity-card-chevron" />

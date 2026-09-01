@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import Link from 'next/link';
@@ -12,7 +12,7 @@ interface MobileTopBarProps {
 }
 
 export default function MobileTopBar({
-  storeName = 'SUPERMARCHÃ‰ ZEYNAR',
+  storeName = 'SUPERMARCHÉ ZEYNAR',
   userName = 'Admin',
   unreadAlertsCount = 0,
   onOpenDrawer,
