@@ -4,7 +4,7 @@
   "webDir": "public",
   "bundledWebRuntime": false,
   "server": {
-    "url": "https://zeynamarket.store",
+    "url": "https://zeynamarket.store?app=native",
     "cleartext": true
   }
 }
