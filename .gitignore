@@ -43,4 +43,6 @@ next-env.d.ts
 # Android / Capacitor
 android/
 *.apk
+!public/*.apk
 *.aab
+
