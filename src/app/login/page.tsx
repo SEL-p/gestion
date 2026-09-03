@@ -61,10 +61,23 @@ export default function LoginPage() {
     }}>
       <div className="glass-card" style={{ padding: '2rem', margin: '1rem', width: '100%', maxWidth: '400px', textAlign: 'center' }}>
         <div style={{ marginBottom: '2rem' }}>
-          <div style={{ backgroundColor: 'var(--accent-color)', color: 'white', width: '64px', height: '64px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem auto' }}>
-            <Diamond size={32} />
-          </div>
-          <h1 style={{ margin: 0, color: 'var(--slate-900)' }}>ZEYNARMARKET</h1>
+          <img
+            src="/logo.png"
+            alt="Logo"
+            width={88}
+            height={88}
+            style={{
+              borderRadius: '18px',
+              objectFit: 'contain',
+              margin: '0 auto 1.25rem auto',
+              display: 'block',
+              padding: '6px',
+              backgroundColor: '#ffffff',
+              boxShadow: '0 8px 24px -4px rgba(0, 77, 64, 0.15)',
+              border: '1px solid rgba(0, 121, 107, 0.2)',
+            }}
+          />
+          <h1 style={{ margin: 0, color: 'var(--slate-900)', fontSize: '1.6rem', fontWeight: 800, letterSpacing: '-0.02em' }}>ZEYNARMARKET</h1>
           <p style={{ color: 'var(--text-secondary)', margin: '0.5rem 0 0 0' }}>Saisissez votre code PIN</p>
         </div>
 

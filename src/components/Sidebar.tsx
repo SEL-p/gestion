@@ -40,10 +40,14 @@ export default function Sidebar({ userRole = 'admin', storeName = 'Boutique' }: 
     <aside className="sidebar">
       <div className="brand-header" style={{ marginBottom: '3rem', padding: '0 0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h2 style={{ margin: 0, color: 'var(--slate-900)', fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <span style={{ backgroundColor: 'var(--accent-color)', color: 'white', width: '32px', height: '32px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <Diamond size={18} />
-          </span>
-          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{storeName}</span>
+          <img
+            src="/logo.png"
+            alt="Logo"
+            width={36}
+            height={36}
+            style={{ borderRadius: '8px', objectFit: 'contain', flexShrink: 0, background: '#fff', padding: '2px', border: '1px solid var(--slate-200)', boxShadow: '0 2px 8px rgba(0, 77, 64, 0.12)' }}
+          />
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 700, letterSpacing: '-0.02em' }}>{storeName}</span>
         </h2>
         
         {/* Mobile Logout Button (hidden on desktop via CSS) */}

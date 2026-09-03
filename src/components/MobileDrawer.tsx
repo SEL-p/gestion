@@ -81,9 +81,14 @@ export default function MobileDrawer({
             <X size={22} color="#ffffff" />
           </button>
 
-          <div className="drawer-header-content">
-            <div className="drawer-logo-circle">
-              <Store size={32} color="#004D40" />
+            <div className="drawer-logo-circle" style={{ overflow: 'hidden', padding: '4px', background: '#fff' }}>
+              <img
+                src="/logo.png"
+                alt="Logo"
+                width={56}
+                height={56}
+                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+              />
             </div>
             <h2 className="drawer-store-title">{storeName}</h2>
           </div>

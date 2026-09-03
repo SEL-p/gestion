@@ -27,6 +27,13 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: name,
     description: `${name} - Logiciel de Caisse & Gestion Supermarché`,
+    icons: {
+      icon: [
+        { url: '/logo.png', type: 'image/png' },
+        { url: '/favicon.png', sizes: '64x64', type: 'image/png' },
+      ],
+      apple: '/icon-192.png',
+    },
   };
 }
 

@@ -173,6 +173,15 @@ export default function SettingsForm({ initialData }: { initialData: SettingsDat
           <div className="receipt-sawtooth-top" />
           
           <div className="receipt-inner">
+            <div style={{ textAlign: 'center', marginBottom: '0.5rem' }}>
+              <img
+                src="/logo.png"
+                alt="Logo"
+                width={48}
+                height={48}
+                style={{ margin: '0 auto', display: 'block', objectFit: 'contain' }}
+              />
+            </div>
             <div className="receipt-store-name">{storeName || 'NOM DU MAGASIN'}</div>
             <div className="receipt-store-address">{address}</div>
             <div className="receipt-store-phone">Tél : {phone}</div>

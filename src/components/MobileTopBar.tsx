@@ -33,7 +33,13 @@ export default function MobileTopBar({
         {/* Center: Brand & User Greeting */}
         <div className="mobile-brand-info">
           <div className="mobile-brand-title">
-            <Store size={18} className="store-icon" />
+            <img
+              src="/logo.png"
+              alt="Logo"
+              width={26}
+              height={26}
+              style={{ borderRadius: '6px', objectFit: 'contain', marginRight: '6px', background: '#fff', padding: '1px' }}
+            />
             <span>{storeName.toUpperCase()}</span>
             <Info size={14} className="info-icon" />
           </div>

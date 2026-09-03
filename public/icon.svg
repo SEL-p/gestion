@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="primaryGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#004D40"/>
+      <stop offset="100%" stop-color="#00796B"/>
+    </linearGradient>
+    <linearGradient id="leafGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#26A69A"/>
+      <stop offset="100%" stop-color="#00897B"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background rounded rectangle -->
+  <rect width="512" height="512" rx="128" fill="#FFFFFF"/>
+
+  <!-- Shopping Bag Outline -->
+  <path d="M140 180 L372 180 L400 420 L112 420 Z" 
+        fill="none" 
+        stroke="url(#primaryGrad)" 
+        stroke-width="26" 
+        stroke-linejoin="round" 
+        stroke-linecap="round"/>
+
+  <!-- Bag Handles -->
+  <path d="M206 180 V130 C206 102 228 80 256 80 C284 80 306 102 306 130 V180" 
+        fill="none" 
+        stroke="url(#primaryGrad)" 
+        stroke-width="26" 
+        stroke-linecap="round"/>
+
+  <!-- Stylized Fresh Leaf / Sprout Center Emblem -->
+  <path d="M256 220 C310 220 340 260 340 320 C340 380 280 400 256 400 C232 400 172 380 172 320 C172 260 202 220 256 220 Z" 
+        fill="url(#leafGrad)"/>
+  
+  <!-- Leaf Center Vein -->
+  <path d="M256 240 V380" 
+        stroke="#FFFFFF" 
+        stroke-width="12" 
+        stroke-linecap="round"/>
+</svg>
