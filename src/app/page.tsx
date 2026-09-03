@@ -20,6 +20,7 @@ import {
   ApkDesktopBanner,
   ApkMobileBanner,
 } from '@/components/ApkDownloadLinks';
+import AppUpdateBanner from '@/components/AppUpdateBanner';
 
 export default async function DashboardPage() {
   const today = new Date();
@@ -85,6 +86,9 @@ export default async function DashboardPage() {
 
   return (
     <div className="dashboard-container animate-fade-in">
+      {/* Seamless In-App APK Update Banner */}
+      <AppUpdateBanner />
+
       {/* Mobile / Tablet View Experience */}
       <div className="mobile-dashboard-layout">
         {/* 1. Top Carousel Promotional Banners */}

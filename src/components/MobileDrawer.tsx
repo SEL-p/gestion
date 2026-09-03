@@ -21,6 +21,7 @@ import {
   Sun,
   Moon,
   Eye,
+  Download,
   Sparkles
 } from 'lucide-react';
 
@@ -231,6 +232,31 @@ export default function MobileDrawer({
                 </Link>
               </>
             )}
+
+            {/* Section: Mise à jour APK */}
+            <div style={{ marginTop: '0.6rem', paddingTop: '0.6rem', borderTop: '1px solid var(--slate-200)' }}>
+              <a
+                href="/zeynarmarket.apk"
+                download="zeynarmarket.apk"
+                className="drawer-item"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(0, 121, 107, 0.08) 0%, rgba(0, 77, 64, 0.03) 100%)',
+                  borderRadius: '10px',
+                  border: '1px solid rgba(0, 121, 107, 0.2)',
+                }}
+              >
+                <div className="drawer-icon-wrap" style={{ backgroundColor: '#004D40', color: '#fff' }}>
+                  <Download size={17} />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
+                  <span className="drawer-item-label font-bold" style={{ color: '#004D40', fontSize: '0.88rem' }}>Mettre à jour l&apos;APK</span>
+                  <span className="drawer-item-sub" style={{ fontSize: '0.72rem', color: 'var(--slate-600)' }}>Sans désinstaller (Logo ZMH)</span>
+                </div>
+                <span style={{ fontSize: '0.68rem', backgroundColor: '#00796B', color: '#fff', padding: '2px 6px', borderRadius: '6px', fontWeight: 700 }}>
+                  v1.1
+                </span>
+              </a>
+            </div>
           </div>
         </div>
 

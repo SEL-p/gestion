@@ -11,7 +11,7 @@ import {
   AlertCircle,
   Save,
   Printer,
-  Sparkles,
+  Download,
 } from 'lucide-react';
 
 interface SettingsData {
@@ -160,6 +160,49 @@ export default function SettingsForm({ initialData }: { initialData: SettingsDat
             <span>{loading ? 'Enregistrement...' : 'Sauvegarder les modifications'}</span>
           </button>
         </form>
+
+        {/* APK Version & Update Card */}
+        <div className="glass-card" style={{ marginTop: '1.5rem', padding: '1.25rem', border: '1px solid rgba(0, 121, 107, 0.25)', borderRadius: '14px', background: 'linear-gradient(135deg, rgba(0, 121, 107, 0.06) 0%, rgba(0, 77, 64, 0.02) 100%)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+              <img
+                src="/logo.png"
+                alt="Logo ZMH"
+                width={44}
+                height={44}
+                style={{ borderRadius: '10px', objectFit: 'contain', background: '#fff', padding: '2px', border: '1px solid var(--slate-200)' }}
+              />
+              <div>
+                <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--slate-900)' }}>
+                  Application Android APK - Version 1.1
+                </div>
+                <div style={{ fontSize: '0.82rem', color: 'var(--slate-600)', marginTop: '2px' }}>
+                  Mise à jour directe sans désinstaller l&apos;ancienne application.
+                </div>
+              </div>
+            </div>
+            <a
+              href="/zeynarmarket.apk"
+              download="zeynarmarket.apk"
+              className="btn btn-primary"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                backgroundColor: '#00796B',
+                color: '#fff',
+                textDecoration: 'none',
+                padding: '0.65rem 1.25rem',
+                borderRadius: '10px',
+                fontWeight: 600,
+                fontSize: '0.9rem',
+              }}
+            >
+              <Download size={17} />
+              Télécharger la mise à jour (v1.1)
+            </a>
+          </div>
+        </div>
       </div>
 
       {/* Live Thermal Receipt Simulator on Right */}
