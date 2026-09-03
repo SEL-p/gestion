@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { logout } from '@/actions/auth';
 import { useTheme } from '@/components/ThemeProvider';
 import { triggerApkDownload, APK_DOWNLOAD_URL } from '@/lib/apk-download';
+import { getDeviceVersionState, LATEST_APP_VERSION } from '@/lib/version';
 import {
   Home,
   ShoppingBag,
@@ -23,6 +24,7 @@ import {
   Moon,
   Eye,
   Download,
+  CheckCircle2,
   Sparkles
 } from 'lucide-react';
 
@@ -234,13 +236,11 @@ export default function MobileDrawer({
               </>
             )}
 
-            {/* Section: Mise à jour APK */}
+            {/* Section: Mise à jour & Version APK */}
             <div style={{ marginTop: '0.6rem', paddingTop: '0.6rem', borderTop: '1px solid var(--slate-200)' }}>
               <a
                 href={APK_DOWNLOAD_URL}
                 onClick={triggerApkDownload}
-                target="_blank"
-                rel="noopener noreferrer"
                 className="drawer-item"
                 style={{
                   background: 'linear-gradient(135deg, rgba(0, 121, 107, 0.08) 0%, rgba(0, 77, 64, 0.03) 100%)',
@@ -249,14 +249,18 @@ export default function MobileDrawer({
                 }}
               >
                 <div className="drawer-icon-wrap" style={{ backgroundColor: '#004D40', color: '#fff' }}>
-                  <Download size={17} />
+                  <CheckCircle2 size={17} color="#4ADE80" />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
-                  <span className="drawer-item-label font-bold" style={{ color: '#004D40', fontSize: '0.88rem' }}>Mettre à jour l&apos;APK</span>
-                  <span className="drawer-item-sub" style={{ fontSize: '0.72rem', color: 'var(--slate-600)' }}>Sans désinstaller (Logo ZMH)</span>
+                  <span className="drawer-item-label font-bold" style={{ color: '#004D40', fontSize: '0.88rem' }}>
+                    Application v{LATEST_APP_VERSION.versionName}
+                  </span>
+                  <span className="drawer-item-sub" style={{ fontSize: '0.72rem', color: 'var(--slate-600)' }}>
+                    Mise à jour #{LATEST_APP_VERSION.versionCode} (À jour)
+                  </span>
                 </div>
-                <span style={{ fontSize: '0.68rem', backgroundColor: '#00796B', color: '#fff', padding: '2px 6px', borderRadius: '6px', fontWeight: 700 }}>
-                  v1.1
+                <span style={{ fontSize: '0.68rem', backgroundColor: '#10B981', color: '#fff', padding: '2px 6px', borderRadius: '6px', fontWeight: 700 }}>
+                  À jour
                 </span>
               </a>
             </div>

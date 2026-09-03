@@ -3,33 +3,40 @@
 import { useState, useSyncExternalStore } from 'react';
 import { Download, Sparkles, X } from 'lucide-react';
 import { triggerApkDownload, APK_DOWNLOAD_URL } from '@/lib/apk-download';
+import { getDeviceVersionState, LATEST_APP_VERSION, markUpdateInstalled } from '@/lib/version';
 
 function subscribe() {
   return () => {};
 }
 
-function getIsDismissed() {
+function getShouldShowBanner() {
   if (typeof window === 'undefined') return false;
   try {
-    return sessionStorage.getItem('zeynarmarket_update_v1_1_dismissed') === 'true';
+    const isDismissed = sessionStorage.getItem('zeynarmarket_update_dismissed') === 'true';
+    if (isDismissed) return false;
+
+    const state = getDeviceVersionState();
+    return state.hasUpdateAvailable;
   } catch {
     return false;
   }
 }
 
 export default function AppUpdateBanner() {
-  const isDismissedStored = useSyncExternalStore(subscribe, getIsDismissed, () => false);
+  const shouldShow = useSyncExternalStore(subscribe, getShouldShowBanner, () => false);
   const [dismissedLocally, setDismissedLocally] = useState(false);
 
-  if (isDismissedStored || dismissedLocally) return null;
+  // Si l'application est déjà à jour (v1.1 / Build 2), le message NE S'AFFICHE PAS !
+  if (!shouldShow || dismissedLocally) return null;
 
   const handleDismiss = () => {
     setDismissedLocally(true);
-    try {
-      sessionStorage.setItem('zeynarmarket_update_v1_1_dismissed', 'true');
-    } catch {
-      // ignore
-    }
+    markUpdateInstalled();
+  };
+
+  const handleDownloadClick = (e: React.MouseEvent) => {
+    setDismissedLocally(true);
+    triggerApkDownload(e);
   };
 
   return (
@@ -66,7 +73,7 @@ export default function AppUpdateBanner() {
         </div>
         <div>
           <div style={{ fontWeight: 700, fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span>Mise à jour APK disponible (v1.1)</span>
+            <span>Mise à jour disponible (v{LATEST_APP_VERSION.versionName})</span>
             <span
               style={{
                 fontSize: '0.7rem',
@@ -77,11 +84,11 @@ export default function AppUpdateBanner() {
                 fontWeight: 600,
               }}
             >
-              Logo ZMH inclus
+              Mise à jour #{LATEST_APP_VERSION.versionCode}
             </span>
           </div>
           <div style={{ fontSize: '0.82rem', opacity: 0.92, marginTop: '2px' }}>
-            Installez cette mise à jour par-dessus votre ancienne application sans la désinstaller. Vos données sont conservées.
+            Installez cette mise à jour par-dessus votre ancienne application sans la désinstaller.
           </div>
         </div>
       </div>
@@ -89,9 +96,7 @@ export default function AppUpdateBanner() {
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
         <a
           href={APK_DOWNLOAD_URL}
-          onClick={triggerApkDownload}
-          target="_blank"
-          rel="noopener noreferrer"
+          onClick={handleDownloadClick}
           className="btn"
           style={{
             backgroundColor: '#ffffff',
@@ -109,7 +114,7 @@ export default function AppUpdateBanner() {
           }}
         >
           <Download size={16} />
-          Mettre à jour (v1.1)
+          Mettre à jour
         </a>
         <button
           type="button"

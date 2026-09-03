@@ -1,5 +1,7 @@
-export const APK_DOWNLOAD_URL = 'https://github.com/SEL-p/gestion/raw/main/public/zeynarmarket.apk';
-export const APK_DIRECT_URL = '/zeynarmarket.apk';
+import { markUpdateInstalled, LATEST_APP_VERSION } from './version';
+
+// Téléchargement direct depuis le domaine officiel zeynamarket.store (sans redirection GitHub)
+export const APK_DOWNLOAD_URL = '/api/download/apk';
 
 export function triggerApkDownload(e?: React.MouseEvent) {
   if (e) {
@@ -8,13 +10,17 @@ export function triggerApkDownload(e?: React.MouseEvent) {
 
   if (typeof window === 'undefined') return;
 
-  // External host (github.com) triggers Capacitor Bridge's Intent.ACTION_VIEW,
-  // opening the phone's native browser (Chrome/Samsung) which immediately downloads the APK!
+  // Marquer la version comme mise à jour pour que le bandeau disparaisse
+  markUpdateInstalled(LATEST_APP_VERSION.versionCode);
+
+  const fullUrl = `${window.location.origin}${APK_DOWNLOAD_URL}`;
+
+  // Déclencher le téléchargement direct
   try {
-    window.open(APK_DOWNLOAD_URL, '_system');
+    window.open(fullUrl, '_system');
   } catch {
     // fallback
   }
 
-  window.location.href = APK_DOWNLOAD_URL;
+  window.location.href = fullUrl;
 }

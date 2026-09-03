@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { updateStoreSettings } from '@/actions/settings';
 import { triggerApkDownload, APK_DOWNLOAD_URL } from '@/lib/apk-download';
+import { LATEST_APP_VERSION } from '@/lib/version';
 import {
   Store,
   MapPin,
@@ -175,18 +176,16 @@ export default function SettingsForm({ initialData }: { initialData: SettingsDat
               />
               <div>
                 <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--slate-900)' }}>
-                  Application Android APK - Version 1.1
+                  Application Android APK — Version {LATEST_APP_VERSION.versionName}
                 </div>
                 <div style={{ fontSize: '0.82rem', color: 'var(--slate-600)', marginTop: '2px' }}>
-                  Mise à jour directe sans désinstaller l&apos;ancienne application.
+                  Mise à jour #{LATEST_APP_VERSION.versionCode} déployée le {LATEST_APP_VERSION.releaseDate} • Installation directe par-dessus sans désinstallation.
                 </div>
               </div>
             </div>
             <a
               href={APK_DOWNLOAD_URL}
               onClick={triggerApkDownload}
-              target="_blank"
-              rel="noopener noreferrer"
               className="btn btn-primary"
               style={{
                 display: 'inline-flex',
@@ -202,7 +201,7 @@ export default function SettingsForm({ initialData }: { initialData: SettingsDat
               }}
             >
               <Download size={17} />
-              Télécharger la mise à jour (v1.1)
+              Télécharger l&apos;APK (v{LATEST_APP_VERSION.versionName})
             </a>
           </div>
         </div>
