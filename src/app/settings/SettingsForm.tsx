@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { updateStoreSettings } from '@/actions/settings';
+import { triggerApkDownload, APK_DOWNLOAD_URL } from '@/lib/apk-download';
 import {
   Store,
   MapPin,
@@ -182,8 +183,10 @@ export default function SettingsForm({ initialData }: { initialData: SettingsDat
               </div>
             </div>
             <a
-              href="/zeynarmarket.apk"
-              download="zeynarmarket.apk"
+              href={APK_DOWNLOAD_URL}
+              onClick={triggerApkDownload}
+              target="_blank"
+              rel="noopener noreferrer"
               className="btn btn-primary"
               style={{
                 display: 'inline-flex',

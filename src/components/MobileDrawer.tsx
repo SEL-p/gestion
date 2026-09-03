@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { logout } from '@/actions/auth';
 import { useTheme } from '@/components/ThemeProvider';
+import { triggerApkDownload, APK_DOWNLOAD_URL } from '@/lib/apk-download';
 import {
   Home,
   ShoppingBag,
@@ -236,8 +237,10 @@ export default function MobileDrawer({
             {/* Section: Mise à jour APK */}
             <div style={{ marginTop: '0.6rem', paddingTop: '0.6rem', borderTop: '1px solid var(--slate-200)' }}>
               <a
-                href="/zeynarmarket.apk"
-                download="zeynarmarket.apk"
+                href={APK_DOWNLOAD_URL}
+                onClick={triggerApkDownload}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="drawer-item"
                 style={{
                   background: 'linear-gradient(135deg, rgba(0, 121, 107, 0.08) 0%, rgba(0, 77, 64, 0.03) 100%)',

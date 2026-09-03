@@ -2,6 +2,7 @@
 
 import { useState, useSyncExternalStore } from 'react';
 import { Download, Sparkles, X } from 'lucide-react';
+import { triggerApkDownload, APK_DOWNLOAD_URL } from '@/lib/apk-download';
 
 function subscribe() {
   return () => {};
@@ -87,8 +88,10 @@ export default function AppUpdateBanner() {
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
         <a
-          href="/zeynarmarket.apk"
-          download="zeynarmarket.apk"
+          href={APK_DOWNLOAD_URL}
+          onClick={triggerApkDownload}
+          target="_blank"
+          rel="noopener noreferrer"
           className="btn"
           style={{
             backgroundColor: '#ffffff',
@@ -106,7 +109,7 @@ export default function AppUpdateBanner() {
           }}
         >
           <Download size={16} />
-          Mettre à jour
+          Mettre à jour (v1.1)
         </a>
         <button
           type="button"

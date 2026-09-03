@@ -3,6 +3,7 @@
 import { useSyncExternalStore } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { Download, Smartphone } from 'lucide-react';
+import { triggerApkDownload, APK_DOWNLOAD_URL } from '@/lib/apk-download';
 
 function checkIsNative(): boolean {
   if (typeof window === 'undefined') return false;
@@ -56,8 +57,10 @@ export function ApkHeaderDownloadButton() {
 
   return (
     <a
-      href="/zeynarmarket.apk"
-      download="zeynarmarket.apk"
+      href={APK_DOWNLOAD_URL}
+      onClick={triggerApkDownload}
+      target="_blank"
+      rel="noopener noreferrer"
       className="btn btn-outline-secondary"
       style={{
         padding: '0.85rem 1.35rem',
@@ -129,8 +132,10 @@ export function ApkDesktopBanner() {
         </div>
       </div>
       <a
-        href="/zeynarmarket.apk"
-        download="zeynarmarket.apk"
+        href={APK_DOWNLOAD_URL}
+        onClick={triggerApkDownload}
+        target="_blank"
+        rel="noopener noreferrer"
         className="btn btn-primary"
         style={{
           padding: '0.75rem 1.5rem',
@@ -200,8 +205,10 @@ export function ApkMobileBanner() {
         </div>
       </div>
       <a
-        href="/zeynarmarket.apk"
-        download="zeynarmarket.apk"
+        href={APK_DOWNLOAD_URL}
+        onClick={triggerApkDownload}
+        target="_blank"
+        rel="noopener noreferrer"
         className="btn btn-sm"
         style={{
           padding: '0.5rem 0.95rem',
