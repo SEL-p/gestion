@@ -6,6 +6,7 @@ import { logout } from '@/actions/auth';
 import { useEffect, useState } from 'react';
 import { Package, History, PlusCircle, Users, AlertTriangle, CheckCircle, Diamond, ShoppingCart, LogOut, Sun, Moon, Eye, DollarSign, Sparkles } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
+import { LATEST_APP_VERSION } from '@/lib/version';
 
 export default function Sidebar({ userRole = 'admin', storeName = 'Boutique' }: { userRole?: string, storeName?: string }) {
   const pathname = usePathname();
@@ -150,9 +151,9 @@ export default function Sidebar({ userRole = 'admin', storeName = 'Boutique' }: 
           <LogOut size={18} /> Déconnexion
         </button>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', color: 'var(--slate-500)', fontSize: '0.8rem' }}>
-          <span>Version 2.5</span>
+          <span>Version {LATEST_APP_VERSION.versionName}</span>
           <span>•</span>
-          <span>Zeynarmarket</span>
+          <span>Mise à jour #{LATEST_APP_VERSION.versionCode}</span>
         </div>
       </div>
     </aside>

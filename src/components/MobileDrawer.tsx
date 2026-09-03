@@ -297,7 +297,7 @@ export default function MobileDrawer({
           </div>
 
           <div className="drawer-version-pill">
-            Version 2.5 (Supermarché)
+            Version {LATEST_APP_VERSION.versionName} • Mise à jour #{LATEST_APP_VERSION.versionCode}
           </div>
         </div>
       </aside>
