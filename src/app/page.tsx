@@ -10,9 +10,6 @@ import {
   Activity,
   DollarSign,
   Box,
-  Store,
-  Download,
-  Smartphone,
 } from 'lucide-react';
 import MobileBannerCarousel from '@/components/MobileBannerCarousel';
 import QuickActionGrid from '@/components/QuickActionGrid';

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useSyncExternalStore } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { Download, Smartphone } from 'lucide-react';
 
@@ -17,8 +17,9 @@ function checkIsNative(): boolean {
     }
 
     // 3. Check Capacitor Native Platform
-    if (typeof (window as any).Capacitor !== 'undefined') {
-      if ((window as any).Capacitor.isNativePlatform?.() || (window as any).Capacitor.getPlatform?.() === 'android') {
+    const win = window as unknown as { Capacitor?: { isNativePlatform?: () => boolean; getPlatform?: () => string } };
+    if (win.Capacitor) {
+      if (win.Capacitor.isNativePlatform?.() || win.Capacitor.getPlatform?.() === 'android') {
         sessionStorage.setItem('is_native_apk', 'true');
         return true;
       }
@@ -40,12 +41,16 @@ function checkIsNative(): boolean {
   return false;
 }
 
-export function ApkHeaderDownloadButton() {
-  const [isNative, setIsNative] = useState(checkIsNative);
+function subscribe() {
+  return () => {};
+}
 
-  useEffect(() => {
-    setIsNative(checkIsNative());
-  }, []);
+function useIsNative(): boolean {
+  return useSyncExternalStore(subscribe, checkIsNative, () => false);
+}
+
+export function ApkHeaderDownloadButton() {
+  const isNative = useIsNative();
 
   if (isNative) return null;
 
@@ -70,17 +75,13 @@ export function ApkHeaderDownloadButton() {
       }}
     >
       <Download size={19} style={{ color: '#00796B' }} />
-      <span>Télécharger l'APK</span>
+      <span>Télécharger l&apos;APK</span>
     </a>
   );
 }
 
 export function ApkDesktopBanner() {
-  const [isNative, setIsNative] = useState(checkIsNative);
-
-  useEffect(() => {
-    setIsNative(checkIsNative());
-  }, []);
+  const isNative = useIsNative();
 
   if (isNative) return null;
 
@@ -123,7 +124,7 @@ export function ApkDesktopBanner() {
             Application Android ZEYNARMARKET disponible
           </div>
           <div style={{ fontSize: '0.88rem', color: 'var(--slate-600)', marginTop: '2px' }}>
-            Installez l'application native sur vos smartphones, tablettes ou terminaux de caisse Android.
+            Installez l&apos;application native sur vos smartphones, tablettes ou terminaux de caisse Android.
           </div>
         </div>
       </div>
@@ -147,18 +148,14 @@ export function ApkDesktopBanner() {
         }}
       >
         <Download size={18} />
-        Télécharger l'APK Android (4.1 Mo)
+        Télécharger l&apos;APK Android (4.1 Mo)
       </a>
     </div>
   );
 }
 
 export function ApkMobileBanner() {
-  const [isNative, setIsNative] = useState(checkIsNative);
-
-  useEffect(() => {
-    setIsNative(checkIsNative());
-  }, []);
+  const isNative = useIsNative();
 
   if (isNative) return null;
 

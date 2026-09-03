@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Menu, Bell, Info, Store, ShoppingBag } from 'lucide-react';
+import { Menu, Bell, Info, ShoppingBag } from 'lucide-react';
 
 interface MobileTopBarProps {
   storeName?: string;

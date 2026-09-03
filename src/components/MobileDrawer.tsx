@@ -11,7 +11,6 @@ import {
   DollarSign,
   Package,
   Tag,
-  PlusCircle,
   Users,
   ShoppingCart,
   Receipt,
@@ -22,8 +21,6 @@ import {
   Sun,
   Moon,
   Eye,
-  Store,
-  ShieldAlert,
   Sparkles
 } from 'lucide-react';
 
@@ -81,6 +78,7 @@ export default function MobileDrawer({
             <X size={22} color="#ffffff" />
           </button>
 
+          <div className="drawer-header-content">
             <div className="drawer-logo-circle" style={{ overflow: 'hidden', padding: '4px', background: '#fff' }}>
               <img
                 src="/logo.png"
