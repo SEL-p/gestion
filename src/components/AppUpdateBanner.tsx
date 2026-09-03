@@ -84,7 +84,7 @@ export default function AppUpdateBanner() {
                 fontWeight: 600,
               }}
             >
-              Mise à jour #{LATEST_APP_VERSION.versionCode}
+              Nouvelle version
             </span>
           </div>
           <div style={{ fontSize: '0.82rem', opacity: 0.92, marginTop: '2px' }}>

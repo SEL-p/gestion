@@ -179,7 +179,7 @@ export default function SettingsForm({ initialData }: { initialData: SettingsDat
                   Application Android APK — Version {LATEST_APP_VERSION.versionName}
                 </div>
                 <div style={{ fontSize: '0.82rem', color: 'var(--slate-600)', marginTop: '2px' }}>
-                  Mise à jour #{LATEST_APP_VERSION.versionCode} déployée le {LATEST_APP_VERSION.releaseDate} • Installation directe par-dessus sans désinstallation.
+                  Version {LATEST_APP_VERSION.versionName} • Installation directe par-dessus sans désinstallation.
                 </div>
               </div>
             </div>

@@ -256,7 +256,7 @@ export default function MobileDrawer({
                     Application v{LATEST_APP_VERSION.versionName}
                   </span>
                   <span className="drawer-item-sub" style={{ fontSize: '0.72rem', color: 'var(--slate-600)' }}>
-                    Mise à jour #{LATEST_APP_VERSION.versionCode} (À jour)
+                    Application installée et à jour
                   </span>
                 </div>
                 <span style={{ fontSize: '0.68rem', backgroundColor: '#10B981', color: '#fff', padding: '2px 6px', borderRadius: '6px', fontWeight: 700 }}>
@@ -297,7 +297,7 @@ export default function MobileDrawer({
           </div>
 
           <div className="drawer-version-pill">
-            Version {LATEST_APP_VERSION.versionName} • Mise à jour #{LATEST_APP_VERSION.versionCode}
+            Version {LATEST_APP_VERSION.versionName}
           </div>
         </div>
       </aside>

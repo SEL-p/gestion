@@ -153,7 +153,7 @@ export default function Sidebar({ userRole = 'admin', storeName = 'Boutique' }: 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', color: 'var(--slate-500)', fontSize: '0.8rem' }}>
           <span>Version {LATEST_APP_VERSION.versionName}</span>
           <span>•</span>
-          <span>Mise à jour #{LATEST_APP_VERSION.versionCode}</span>
+          <span>Zeynarmarket</span>
         </div>
       </div>
     </aside>
