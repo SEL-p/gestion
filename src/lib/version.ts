@@ -8,10 +8,11 @@ export interface AppVersionInfo {
 
 // Source unique de vérité pour la version de l'application
 export const LATEST_APP_VERSION: AppVersionInfo = {
-  versionName: '1.1',
-  versionCode: 2, // Mise à jour #2 (Version 1.1 avec logo officiel ZMH transparent)
-  releaseDate: '03/09/2026',
-  releaseNotes: 'Logo officiel ZMH avec fond transparent et icône Android officielle.',
+  versionName: '1.2',
+  versionCode: 3, // Mise à jour #3 (Version 1.2 avec l'onglet Produits et la vue Liste & Tableau)
+  releaseDate: '09/10/2026',
+  releaseNotes:
+    "Nouvel onglet « Produits » (liste & tableau complet des références) et bascule Cartes / Liste & Tableau dans le catalogue.",
   apkDownloadUrl: '/api/download/apk',
 };
 
@@ -66,7 +67,7 @@ export function getDeviceVersionState(): DeviceVersionState {
 
     return {
       isNativeApp: true,
-      installedVersionName: effectiveCode >= 2 ? '1.1' : '1.0',
+      installedVersionName: effectiveCode >= 3 ? '1.2' : effectiveCode >= 2 ? '1.1' : '1.0',
       installedVersionCode: effectiveCode,
       hasUpdateAvailable: effectiveCode < LATEST_APP_VERSION.versionCode,
     };

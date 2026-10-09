@@ -8,6 +8,7 @@ import { useTheme } from '@/components/ThemeProvider';
 import { triggerApkDownload, APK_DOWNLOAD_URL } from '@/lib/apk-download';
 import { getDeviceVersionState, LATEST_APP_VERSION } from '@/lib/version';
 import {
+  Boxes,
   Home,
   ShoppingBag,
   DollarSign,
@@ -109,6 +110,17 @@ export default function MobileDrawer({
                 <Home size={18} />
               </div>
               <span className="drawer-item-label">Accueil</span>
+              <ChevronRight size={16} className="drawer-chevron" />
+            </Link>
+
+            <Link
+              href="/products/list"
+              className={`drawer-item ${pathname === '/products/list' ? 'active' : ''}`}
+            >
+              <div className="drawer-icon-wrap icon-products">
+                <Boxes size={18} />
+              </div>
+              <span className="drawer-item-label">Produits</span>
               <ChevronRight size={16} className="drawer-chevron" />
             </Link>
           </div>

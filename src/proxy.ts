@@ -4,11 +4,12 @@ import type { NextRequest } from 'next/server';
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
-  // Exclude static files and API routes that are public
+  // Exclure les fichiers statiques et les routes API publiques
   if (
     pathname.startsWith('/_next') ||
-    pathname.startsWith('/favicon.ico') ||
-    pathname.startsWith('/uploads')
+    pathname.startsWith('/uploads') ||
+    // Fichiers statiques du dossier /public
+    /\.(?:png|jpg|jpeg|gif|webp|svg|ico|woff2?|ttf|otf|eot|json|txt|xml|pdf|apk|mp4|webm)$/i.test(pathname)
   ) {
     return NextResponse.next();
   }
@@ -43,5 +44,6 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  // Exclure : api, _next, fichiers statiques courants (images, fonts, manifests, apk…)
+  matcher: ['/((?!api|_next/static|_next/image|favicon\.ico|.*\.(?:png|jpg|jpeg|gif|webp|svg|ico|woff2?|ttf|otf|json|txt|xml|apk|pdf|mp4|webm)$).*)'],
 };

@@ -10,14 +10,15 @@ import {
   Filter,
   Download,
   AlertTriangle,
-  Layers,
   TrendingUp,
   Tag,
   ArrowUpDown,
   Barcode,
   ShoppingBag,
-  ExternalLink,
   Edit3,
+  LayoutGrid,
+  List,
+  Boxes,
 } from 'lucide-react';
 
 interface ProductWithImages {
@@ -39,16 +40,36 @@ interface ProductWithImages {
 interface ProductCatalogClientProps {
   products: ProductWithImages[];
   categories: string[];
+  /** Vue ouverte par défaut : "grid" (vitrine de cartes) ou "table" (Liste & Tableau) */
+  initialViewMode?: 'grid' | 'table';
+  /** Titre affiché en haut de page (personnalisable pour l'onglet Produits) */
+  pageTitle?: string;
+  /** Sous-titre affiché en haut de page */
+  pageSubtitle?: string;
+  /**
+   * "catalog" (défaut) : catalogue complet (titre, actions, KPI, filtres, cartes ou tableau).
+   * "products-only" : vitrine des articles enregistrés (bannière, recherche/filtres, cartes par
+   * défaut), sans l'en-tête standard ni les KPI du catalogue (cf. .products-only-view).
+   */
+  variant?: 'catalog' | 'products-only';
 }
 
 export default function ProductCatalogClient({
   products,
   categories,
+  initialViewMode = 'grid',
+  pageTitle = 'Catalogue & Rayons Supermarché',
+  pageSubtitle = 'Gérez vos références articles, contrôlez les stocks et préparez vos rayons.',
+  variant = 'catalog',
 }: ProductCatalogClientProps) {
+  // Mode "Produits" : on n'affiche que la liste des produits (cf. .products-only-view)
+  const isProductsOnly = variant === 'products-only';
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [stockFilter, setStockFilter] = useState<'all' | 'in_stock' | 'low_stock' | 'out_of_stock'>('all');
   const [sortBy, setSortBy] = useState<'name' | 'price_asc' | 'price_desc' | 'stock_asc' | 'stock_desc'>('name');
+  // Mode d'affichage : "Cartes" (vitrine en grille) ou "Liste / Tableau"
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>(initialViewMode);
 
   // Filtered & Sorted Products
   const filteredProducts = useMemo(() => {
@@ -93,27 +114,103 @@ export default function ProductCatalogClient({
   const outOfStockCount = products.filter((p) => p.stock === 0).length;
   const lowStockCount = products.filter((p) => p.stock > 0 && p.stock <= p.minStock).length;
   const totalStockValue = products.reduce((acc, p) => acc + p.priceTTC * p.stock, 0);
+  const criticalCount = outOfStockCount + lowStockCount;
+  // Aucune référence en base : on masque les filtres pour afficher un état d'accueil soigné
+  const hasNoProducts = products.length === 0;
 
   return (
-    <div className="catalog-page-container">
-      {/* Top Header */}
-      <div className="catalog-header-bar">
-        <div>
-          <h1 className="catalog-title">Catalogue & Rayons Supermarché</h1>
-          <p className="catalog-subtitle">
-            Gérez vos références articles, contrôlez les stocks et préparez vos rayons.
-          </p>
+    <div className={`catalog-page-container${isProductsOnly ? ' products-only-view' : ''}${hasNoProducts ? ' is-empty' : ''}`}>
+      {/* En-tête : bannière dédiée à l'onglet "Produits", en-tête standard sinon */}
+      {isProductsOnly ? (
+        <div className="plp-hero">
+          <div className="plp-hero-main">
+            <div className="plp-hero-icon">
+              <Boxes size={26} />
+            </div>
+            <div className="plp-hero-text">
+              <span className="plp-hero-eyebrow">Gestion des références</span>
+              <h1 className="plp-hero-title">{pageTitle}</h1>
+              <p className="plp-hero-subtitle">{pageSubtitle}</p>
+            </div>
+          </div>
+
+          <div className="plp-hero-actions">
+            <Link href="/api/csv" className="btn btn-outline plp-hero-btn" target="_blank" download>
+              <Download size={16} />
+              <span>Exporter CSV</span>
+            </Link>
+            <Link href="/products/new" className="btn btn-primary plp-hero-btn">
+              <Plus size={18} />
+              <span>Nouvel Article</span>
+            </Link>
+          </div>
+
+          <div className="plp-hero-stats">
+            <div className="plp-hero-stat">
+              <strong>{totalArticles}</strong>
+              <span>Références</span>
+            </div>
+            <div className="plp-hero-stat">
+              <strong>{categories.length}</strong>
+              <span>Rayons</span>
+            </div>
+            <div className="plp-hero-stat">
+              <strong>{criticalCount}</strong>
+              <span>En alerte stock</span>
+            </div>
+            <div className="plp-hero-stat">
+              <strong>{totalStockValue.toLocaleString('fr-FR')} FCFA</strong>
+              <span>Valeur du stock</span>
+            </div>
+          </div>
         </div>
-        <div className="catalog-actions-group">
-          <Link href="/api/csv" className="btn btn-outline btn-export" target="_blank" download>
-            <Download size={16} />
-            <span>Exporter CSV</span>
-          </Link>
-          <Link href="/products/new" className="btn btn-primary btn-add-product">
-            <Plus size={18} />
-            <span>Nouvel Article</span>
-          </Link>
+      ) : (
+        <div className="catalog-header-bar">
+          <div>
+            <h1 className="catalog-title">{pageTitle}</h1>
+            <p className="catalog-subtitle">
+              {pageSubtitle}
+            </p>
+          </div>
+          <div className="catalog-actions-group">
+            <Link href="/api/csv" className="btn btn-outline btn-export" target="_blank" download>
+              <Download size={16} />
+              <span>Exporter CSV</span>
+            </Link>
+            <Link href="/products/new" className="btn btn-primary btn-add-product">
+              <Plus size={18} />
+              <span>Nouvel Article</span>
+            </Link>
+          </div>
         </div>
+      )}
+
+      {/* View Mode Tabs : Cartes / Liste & Tableau */}
+      <div
+        className="catalog-view-tabs"
+        role="tablist"
+        aria-label="Mode d'affichage du catalogue"
+      >
+        <button
+          type="button"
+          role="tab"
+          aria-selected={viewMode === 'grid'}
+          className={`catalog-view-tab ${viewMode === 'grid' ? 'active' : ''}`}
+          onClick={() => setViewMode('grid')}
+        >
+          <LayoutGrid size={16} />
+          <span>Cartes</span>
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={viewMode === 'table'}
+          className={`catalog-view-tab ${viewMode === 'table' ? 'active' : ''}`}
+          onClick={() => setViewMode('table')}
+        >
+          <List size={16} />
+          <span>Liste & Tableau</span>
+        </button>
       </div>
 
       {/* KPI Stats Bar */}
@@ -135,7 +232,7 @@ export default function ProductCatalogClient({
           <div>
             <div className="kpi-label">Stock Critique / Ruptures</div>
             <div className="kpi-value text-danger">
-              {outOfStockCount + lowStockCount} références
+              {criticalCount} références
             </div>
           </div>
         </div>
@@ -231,41 +328,88 @@ export default function ProductCatalogClient({
         </div>
       </div>
 
-      {/* Product Grid / Cards */}
+      {/* Liste des produits (tableau) ou état vide */}
       {filteredProducts.length === 0 ? (
         <div className="catalog-empty-state">
           <div className="empty-icon-wrap">
-            <ShoppingBag size={48} />
+            {hasNoProducts ? <Package size={44} /> : <Search size={44} />}
           </div>
-          <h3>Aucun article ne correspond à votre recherche</h3>
-          <p>Essayez de modifier vos filtres ou ajoutez une nouvelle référence.</p>
-          <div className="empty-actions">
-            <button
-              type="button"
-              className="btn btn-outline btn-sm"
-              onClick={() => {
-                setSearchQuery('');
-                setSelectedCategory('all');
-                setStockFilter('all');
-              }}
-            >
-              Réinitialiser les filtres
-            </button>
-            <Link href="/products/new" className="btn btn-primary btn-sm">
-              <Plus size={16} />
-              <span>Créer un article</span>
-            </Link>
-          </div>
+
+          {hasNoProducts ? (
+            <>
+              <span className="empty-eyebrow">Catalogue vide</span>
+              <h3>Aucun produit enregistré</h3>
+              <p>
+                Créez votre première référence : elle s&apos;affichera ici avec son prix HT/TTC,
+                son stock, sa marge et son seuil d&apos;alerte automatiquement surveillé.
+              </p>
+
+              <div className="empty-actions">
+                <Link href="/products/new" className="btn btn-primary btn-sm">
+                  <Plus size={16} />
+                  <span>Créer mon premier article</span>
+                </Link>
+                <Link href="/categories" className="btn btn-outline btn-sm">
+                  <Tag size={16} />
+                  <span>Préparer mes rayons</span>
+                </Link>
+              </div>
+
+              <div className="empty-hints">
+                <div className="empty-hint">
+                  <div className="empty-hint-icon icon-teal">
+                    <Plus size={16} />
+                  </div>
+                  <strong>1. Créer</strong>
+                  <span>Nom, SKU, code-barres, prix d&apos;achat et de vente, seuil d&apos;alerte.</span>
+                </div>
+                <div className="empty-hint">
+                  <div className="empty-hint-icon icon-purple">
+                    <Tag size={16} />
+                  </div>
+                  <strong>2. Classer</strong>
+                  <span>Rangez chaque référence dans un rayon pour filtrer le catalogue.</span>
+                </div>
+                <div className="empty-hint">
+                  <div className="empty-hint-icon icon-amber">
+                    <AlertTriangle size={16} />
+                  </div>
+                  <strong>3. Surveiller</strong>
+                  <span>Le stock baisse à chaque vente, les ruptures remontent dans Alertes.</span>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <span className="empty-eyebrow">Aucun résultat</span>
+              <h3>Aucun article ne correspond à votre recherche</h3>
+              <p>Essayez de modifier vos filtres ou ajoutez une nouvelle référence.</p>
+              <div className="empty-actions">
+                <button
+                  type="button"
+                  className="btn btn-outline btn-sm"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setSelectedCategory('all');
+                    setStockFilter('all');
+                  }}
+                >
+                  Réinitialiser les filtres
+                </button>
+                <Link href="/products/new" className="btn btn-primary btn-sm">
+                  <Plus size={16} />
+                  <span>Créer un article</span>
+                </Link>
+              </div>
+            </>
+          )}
         </div>
-      ) : (
+      ) : viewMode === 'grid' ? (
         <div className="catalog-product-grid">
           {filteredProducts.map((product) => {
             const mainImage = product.images.length > 0 ? product.images[0].url : null;
             const isOutOfStock = product.stock === 0;
             const isLowStock = product.stock > 0 && product.stock <= product.minStock;
-            const margin = (product.purchasePrice && product.purchasePrice > 0)
-              ? product.priceTTC - product.purchasePrice
-              : null;
 
             return (
               <div key={product.id} className="catalog-card">
@@ -358,6 +502,113 @@ export default function ProductCatalogClient({
               </div>
             );
           })}
+        </div>
+      ) : (
+        <div className="catalog-table-wrapper">
+          <table className="catalog-table">
+            <thead>
+              <tr>
+                <th>Article</th>
+                <th>Rayon</th>
+                <th style={{ textAlign: 'right' }}>Prix HT</th>
+                <th style={{ textAlign: 'right' }}>Prix TTC</th>
+                <th style={{ textAlign: 'right' }}>Marge</th>
+                <th style={{ textAlign: 'center' }}>Stock</th>
+                <th style={{ textAlign: 'center' }}>Statut</th>
+                <th style={{ textAlign: 'center' }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredProducts.map((product) => {
+                const mainImage = product.images.length > 0 ? product.images[0].url : null;
+                const isOutOfStock = product.stock === 0;
+                const isLowStock = product.stock > 0 && product.stock <= product.minStock;
+                const margin = (product.purchasePrice && product.purchasePrice > 0)
+                  ? product.priceTTC - product.purchasePrice
+                  : null;
+
+                return (
+                  <tr key={product.id}>
+                    <td>
+                      <div className="catalog-table-product">
+                        <div className="catalog-table-thumb">
+                          {mainImage ? (
+                            <Image
+                              src={mainImage}
+                              alt={product.name}
+                              fill
+                              className="catalog-table-thumb-img"
+                            />
+                          ) : (
+                            <Package size={20} color="#94A3B8" />
+                          )}
+                        </div>
+                        <div className="catalog-table-info">
+                          <span className="catalog-table-name" title={product.name}>
+                            {product.name}
+                          </span>
+                          <span className="catalog-table-sku">
+                            <Barcode size={12} /> {product.sku}
+                          </span>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <span className="catalog-table-cat">{product.category}</span>
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      {product.priceHT ? `${product.priceHT.toLocaleString('fr-FR')} FCFA` : '—'}
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      <span className="catalog-table-price">
+                        {product.priceTTC.toLocaleString('fr-FR')} FCFA
+                      </span>
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      {margin !== null ? (
+                        <span className="catalog-table-margin">
+                          {margin.toLocaleString('fr-FR')} FCFA
+                        </span>
+                      ) : (
+                        <span className="catalog-table-muted">—</span>
+                      )}
+                    </td>
+                    <td style={{ textAlign: 'center' }}>
+                      <span className="catalog-table-stock">{product.stock}</span>
+                      <span className="catalog-table-min">seuil {product.minStock}</span>
+                    </td>
+                    <td style={{ textAlign: 'center' }}>
+                      {isOutOfStock ? (
+                        <span className="table-status-pill pill-rupture">Rupture</span>
+                      ) : isLowStock ? (
+                        <span className="table-status-pill pill-warning">Stock Faible</span>
+                      ) : (
+                        <span className="table-status-pill pill-ok">En Stock</span>
+                      )}
+                    </td>
+                    <td>
+                      <div className="catalog-table-actions">
+                        <Link
+                          href={`/products/${product.id}`}
+                          className="btn-card-action btn-edit"
+                          title="Modifier la fiche"
+                        >
+                          <Edit3 size={15} />
+                        </Link>
+                        <Link
+                          href="/pos"
+                          className="btn-card-action btn-sell"
+                          title="Vendre à la caisse"
+                        >
+                          <ShoppingBag size={15} />
+                        </Link>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
     </div>

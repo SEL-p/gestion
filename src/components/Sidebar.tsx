@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { logout } from '@/actions/auth';
 import { useEffect, useState } from 'react';
-import { Package, History, PlusCircle, Users, AlertTriangle, CheckCircle, Diamond, ShoppingCart, LogOut, Sun, Moon, Eye, DollarSign, Sparkles } from 'lucide-react';
+import { Boxes, Package, History, PlusCircle, Users, AlertTriangle, CheckCircle, Diamond, ShoppingCart, LogOut, Sun, Moon, Eye, DollarSign, Sparkles } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
 import { LATEST_APP_VERSION } from '@/lib/version';
 
@@ -27,6 +27,7 @@ export default function Sidebar({ userRole = 'admin', storeName = 'Boutique' }: 
 
   const navItems = [
     { name: 'Dashboard', path: '/', icon: <Package size={20} />, roles: ['admin'] },
+    { name: 'Produits', path: '/products/list', icon: <Boxes size={20} />, roles: ['admin', 'cashier'] },
     { name: 'Catalogue', path: '/products', icon: <Package size={20} />, roles: ['admin', 'cashier'] },
     { name: 'Gérer les Prix', path: '/prices', icon: <DollarSign size={20} />, roles: ['admin', 'manager'] },
     { name: 'Catégories', path: '/categories', icon: <PlusCircle size={20} />, roles: ['admin'] },
