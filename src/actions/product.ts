@@ -7,6 +7,7 @@ import sharp from 'sharp';
 import fs from 'fs';
 import path from 'path';
 import { randomUUID } from 'node:crypto';
+import { cookies } from 'next/headers';
 
 export async function createProduct(formData: FormData) {
   let sku = formData.get('sku') as string;
@@ -100,5 +101,63 @@ export async function updateStock(productId: string, additionalStock: number) {
 
   revalidatePath('/products/[id]', 'page');
   revalidatePath('/');
+  return { success: true };
+}
+
+export async function replaceProductImage(productId: string, formData: FormData) {
+  const cookieStore = await cookies();
+  if (cookieStore.get('auth_role')?.value !== 'admin') {
+    throw new Error('Seul un administrateur peut modifier la photo d’un produit.');
+  }
+
+  if (!productId) throw new Error('Produit introuvable.');
+
+  const image = formData.get('image');
+  if (!(image instanceof File) || image.size === 0) {
+    throw new Error('Sélectionnez une image à envoyer.');
+  }
+  if (image.size > 8 * 1024 * 1024) {
+    throw new Error('La photo doit faire moins de 8 Mo.');
+  }
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(image.type)) {
+    throw new Error('Choisissez une image au format JPEG, PNG ou WebP.');
+  }
+
+  const product = await prisma.product.findUnique({
+    where: { id: productId },
+    select: { id: true },
+  });
+  if (!product) throw new Error('Produit introuvable.');
+
+  const filename = `${randomUUID()}.webp`;
+  const filepath = path.join(process.cwd(), 'public', 'uploads', filename);
+  const buffer = Buffer.from(await image.arrayBuffer());
+
+  await sharp(buffer)
+    .rotate()
+    .resize({ width: 1024, withoutEnlargement: true })
+    .webp({ quality: 80 })
+    .toFile(filepath);
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.productImage.deleteMany({ where: { productId } });
+      await tx.productImage.create({ data: { productId, url: `/uploads/${filename}` } });
+    });
+  } catch (error) {
+    try {
+      await fs.promises.unlink(filepath);
+    } catch (cleanupError) {
+      console.error('Impossible de supprimer une image produit non enregistrée :', cleanupError);
+    }
+    throw error;
+  }
+
+  revalidatePath(`/products/${productId}`);
+  revalidatePath('/products');
+  revalidatePath('/products/list');
+  revalidatePath('/pos');
+  revalidatePath('/alerts');
+
   return { success: true };
 }

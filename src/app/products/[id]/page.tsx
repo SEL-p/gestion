@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import RestockForm from '@/components/RestockForm';
 import { getProductImageSrc } from '@/lib/product-images';
+import ProductImageUpload from '@/components/ProductImageUpload';
 
 export default async function ProductDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -34,6 +35,7 @@ export default async function ProductDetailsPage({ params }: { params: Promise<{
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>Aucune image</div>
               )}
             </div>
+            <ProductImageUpload productId={product.id} />
             
             {product.images.length > 1 && (
               <div style={{ display: 'flex', gap: '1rem', overflowX: 'auto' }}>

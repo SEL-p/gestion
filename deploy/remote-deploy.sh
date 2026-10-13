@@ -51,6 +51,13 @@ trap cleanup_candidate EXIT
 podman pull "$IMAGE"
 podman volume create "$UPLOADS_VOLUME" >/dev/null
 
+# Preserve uploads from the current container when the volume is first introduced.
+UPLOADS_MOUNTPOINT="$(podman volume inspect --format '{{.Mountpoint}}' "$UPLOADS_VOLUME")"
+if [[ -z "$(find "$UPLOADS_MOUNTPOINT" -mindepth 1 -maxdepth 1 -print -quit)" ]] \
+  && podman container exists "$APP_NAME"; then
+  podman cp "$APP_NAME:/app/public/uploads/." "$UPLOADS_MOUNTPOINT/"
+fi
+
 # Teste la nouvelle image sur un port temporaire et avec le réseau MySQL existant.
 cleanup_candidate
 podman run --detach \
