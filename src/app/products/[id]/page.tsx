@@ -3,6 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import RestockForm from '@/components/RestockForm';
+import { getProductImageSrc } from '@/lib/product-images';
 
 export default async function ProductDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -28,7 +29,7 @@ export default async function ProductDetailsPage({ params }: { params: Promise<{
           <div>
             <div style={{ position: 'relative', width: '100%', height: '400px', backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: '12px', overflow: 'hidden', marginBottom: '1rem' }}>
               {product.images.length > 0 ? (
-                <Image src={product.images[0].url} alt={product.name} fill style={{ objectFit: 'cover' }} />
+                <Image src={getProductImageSrc(product.images[0].url)} alt={product.name} fill style={{ objectFit: 'cover' }} />
               ) : (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>Aucune image</div>
               )}
@@ -38,7 +39,7 @@ export default async function ProductDetailsPage({ params }: { params: Promise<{
               <div style={{ display: 'flex', gap: '1rem', overflowX: 'auto' }}>
                 {product.images.slice(1).map((img, idx) => (
                   <div key={idx} style={{ position: 'relative', width: '100px', height: '100px', borderRadius: '8px', overflow: 'hidden' }}>
-                    <Image src={img.url} alt={`${product.name} - ${idx}`} fill style={{ objectFit: 'cover' }} />
+                    <Image src={getProductImageSrc(img.url)} alt={`${product.name} - ${idx}`} fill style={{ objectFit: 'cover' }} />
                   </div>
                 ))}
               </div>

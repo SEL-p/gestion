@@ -20,6 +20,7 @@ import {
   List,
   Boxes,
 } from 'lucide-react';
+import { getProductImageSrc } from '@/lib/product-images';
 
 interface ProductWithImages {
   id: string;
@@ -417,7 +418,7 @@ export default function ProductCatalogClient({
                 <div className="catalog-card-image-wrapper">
                   {mainImage ? (
                     <Image
-                      src={mainImage}
+                      src={getProductImageSrc(mainImage)}
                       alt={product.name}
                       fill
                       className="catalog-card-image"
@@ -534,7 +535,7 @@ export default function ProductCatalogClient({
                         <div className="catalog-table-thumb">
                           {mainImage ? (
                             <Image
-                              src={mainImage}
+                              src={getProductImageSrc(mainImage)}
                               alt={product.name}
                               fill
                               className="catalog-table-thumb-img"

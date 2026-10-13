@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Product, ProductImage } from '@prisma/client';
+import { getProductImageSrc } from '@/lib/product-images';
 
 type ProductWithImages = Product & { images: ProductImage[] };
 
@@ -19,7 +20,7 @@ export default function ProductCard({ product }: { product: ProductWithImages })
     <div className="glass-card">
       <div style={{ position: 'relative', width: '100%', height: '220px', backgroundColor: 'var(--slate-800)' }}>
         {mainImage ? (
-          <Image src={mainImage} alt={product.name} fill style={{ objectFit: 'cover' }} />
+          <Image src={getProductImageSrc(mainImage)} alt={product.name} fill style={{ objectFit: 'cover' }} />
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--slate-500)', fontSize: '2rem' }}>
             📦

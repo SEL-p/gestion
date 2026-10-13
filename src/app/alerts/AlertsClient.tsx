@@ -16,6 +16,7 @@ import {
   DollarSign,
   Barcode,
 } from 'lucide-react';
+import { getProductImageSrc } from '@/lib/product-images';
 
 interface LowStockProduct {
   id: string;
@@ -165,7 +166,7 @@ export default function AlertsClient({
                 <div className="alert-card-header">
                   <div className="alert-img-wrap">
                     {mainImg ? (
-                      <Image src={mainImg} alt={item.name} fill className="alert-img" />
+                      <Image src={getProductImageSrc(mainImg)} alt={item.name} fill className="alert-img" />
                     ) : (
                       <Package size={28} color="#94A3B8" />
                     )}

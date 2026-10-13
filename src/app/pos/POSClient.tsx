@@ -8,6 +8,7 @@ import { logout, loginWithPin } from '@/actions/auth';
 import { useRouter } from 'next/navigation';
 import { Undo, CheckCircle, Lock, LogOut, Sun, Moon, Eye } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
+import { getProductImageSrc } from '@/lib/product-images';
 
 type Product = {
   id: string;
@@ -308,7 +309,7 @@ export default function POSClient({
             >
               <div style={{ width: '100px', height: '100px', position: 'relative', marginBottom: '0.5rem', borderRadius: '8px', overflow: 'hidden', backgroundColor: 'rgba(255,255,255,0.05)' }}>
                 {product.images.length > 0 ? (
-                  <Image src={product.images[0].url} alt={product.name} fill style={{ objectFit: 'cover' }} sizes="100px" />
+                  <Image src={getProductImageSrc(product.images[0].url)} alt={product.name} fill style={{ objectFit: 'cover' }} sizes="100px" />
                 ) : (
                   <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.3)' }}>
                     Pas d'image

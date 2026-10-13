@@ -5,6 +5,8 @@ services:
     restart: always
     ports:
       - "127.0.0.1:3000:3000"
+    volumes:
+      - product_uploads:/app/public/uploads
     env_file:
       - .env.production
     depends_on:
@@ -29,3 +31,4 @@ services:
 
 volumes:
   mysql_data:
+  product_uploads:

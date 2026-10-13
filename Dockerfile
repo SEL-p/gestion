@@ -28,6 +28,7 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+RUN mkdir -p /app/public/uploads && chown nextjs:nodejs /app/public/uploads
 
 # Les migrations ne sont pas exécutées automatiquement au démarrage.
 # En production, ne jamais utiliser db push --accept-data-loss sans sauvegarde.

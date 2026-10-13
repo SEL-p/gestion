@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation';
 import sharp from 'sharp';
 import fs from 'fs';
 import path from 'path';
+import { randomUUID } from 'node:crypto';
 
 export async function createProduct(formData: FormData) {
   let sku = formData.get('sku') as string;
@@ -51,9 +52,7 @@ export async function createProduct(formData: FormData) {
     const buffer = Buffer.from(await image.arrayBuffer());
     
     // Convert to webp and resize (optimize)
-    // The name will be saved locally without SKU initially, but during export we will rename them.
-    // However, to make it easier, let's just save it as [SKU]_[timestamp].webp
-    const filename = `${sku}_${Date.now()}.webp`;
+    const filename = `${randomUUID()}.webp`;
     const filepath = path.join(uploadsDir, filename);
 
     await sharp(buffer)

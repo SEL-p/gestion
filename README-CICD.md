@@ -39,6 +39,7 @@ PORT=3000
 Utiliser le vrai mot de passe actuel de MySQL. Ne jamais committer ce fichier.
 
 Le conteneur MySQL existant et son volume `mysql_data` sont conservés. Le script de déploiement ne supprime ni ne recrée la base.
+Les photos de produits sont conservées dans le volume Podman `makaya_app_uploads`, monté dans les conteneurs candidats, de production et de retour arrière.
 
 ## 3. Préparer l’accès de lecture au registre GHCR
 

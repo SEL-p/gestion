@@ -10,6 +10,7 @@ APP_DIR="${APP_DIR:-/root/opt/zenab/gestion}"
 ENV_FILE="${ENV_FILE:-$APP_DIR/.env.production}"
 APP_NAME="${APP_NAME:-makaya_app}"
 CANDIDATE_NAME="${APP_NAME}_candidate"
+UPLOADS_VOLUME="${UPLOADS_VOLUME:-${APP_NAME}_uploads}"
 APP_PORT="${APP_PORT:-3000}"
 CHECK_PORT="${CHECK_PORT:-3001}"
 
@@ -48,6 +49,7 @@ trap cleanup_candidate EXIT
 
 # Télécharge l'image avant toute interruption de production.
 podman pull "$IMAGE"
+podman volume create "$UPLOADS_VOLUME" >/dev/null
 
 # Teste la nouvelle image sur un port temporaire et avec le réseau MySQL existant.
 cleanup_candidate
@@ -55,6 +57,7 @@ podman run --detach \
   --name "$CANDIDATE_NAME" \
   --network "$NETWORK" \
   --env-file "$ENV_FILE" \
+  --volume "$UPLOADS_VOLUME:/app/public/uploads:Z" \
   --publish "127.0.0.1:${CHECK_PORT}:3000" \
   "$IMAGE" >/dev/null
 
@@ -82,6 +85,7 @@ podman run --detach \
   --name "$APP_NAME" \
   --network "$NETWORK" \
   --env-file "$ENV_FILE" \
+  --volume "$UPLOADS_VOLUME:/app/public/uploads:Z" \
   --publish "127.0.0.1:${APP_PORT}:3000" \
   --restart always \
   "$IMAGE" >/dev/null
@@ -103,6 +107,7 @@ if [[ -n "$OLD_IMAGE" ]]; then
     --name "$APP_NAME" \
     --network "$NETWORK" \
     --env-file "$ENV_FILE" \
+    --volume "$UPLOADS_VOLUME:/app/public/uploads:Z" \
     --publish "127.0.0.1:${APP_PORT}:3000" \
     --restart always \
     "$OLD_IMAGE" >/dev/null
