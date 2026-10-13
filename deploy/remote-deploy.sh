@@ -49,7 +49,9 @@ trap cleanup_candidate EXIT
 
 # Télécharge l'image avant toute interruption de production.
 podman pull "$IMAGE"
-podman volume create "$UPLOADS_VOLUME" >/dev/null
+if ! podman volume exists "$UPLOADS_VOLUME"; then
+  podman volume create "$UPLOADS_VOLUME" >/dev/null
+fi
 
 # Preserve uploads from the current container when the volume is first introduced.
 UPLOADS_MOUNTPOINT="$(podman volume inspect --format '{{.Mountpoint}}' "$UPLOADS_VOLUME")"
