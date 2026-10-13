@@ -34,7 +34,7 @@ cd "$APP_DIR"
 
 # Le conteneur MySQL existant définit le réseau à conserver. Le volume MySQL n'est jamais touché.
 DB_NAME="${DB_NAME:-makaya_db}"
-NETWORK="$(podman inspect --format '{{range $name, $network := .NetworkSettings.Networks}}{{println $name}}{{end}}' "$DB_NAME" 2>/dev/null | head -n 1 | tr -d '\r')"
+NETWORK="$(podman inspect --format '{{range $name, $network := .NetworkSettings.Networks}}{{println $name}}{{end}}' "$DB_NAME" 2>/dev/null | tr -d '\r' | sed -n '1p')"
 if [[ -z "$NETWORK" ]]; then
   echo "Impossible de trouver le réseau du conteneur $DB_NAME." >&2
   exit 1

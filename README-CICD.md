@@ -89,6 +89,16 @@ deploy ALL=(root) NOPASSWD: /usr/local/sbin/gestion-deploy.sh
 
 Le workflow appelle alors uniquement `/usr/local/sbin/gestion-deploy.sh` et ne copie aucun fichier arbitraire sur le serveur à chaque exécution.
 
+Pour mettre à jour ultérieurement le script installé sans modifier le checkout local du VPS :
+
+```bash
+cd /root/opt/zenab/gestion
+git fetch origin
+git show origin/main:deploy/remote-deploy.sh | sudo tee /usr/local/sbin/gestion-deploy.sh >/dev/null
+sudo chown root:root /usr/local/sbin/gestion-deploy.sh
+sudo chmod 750 /usr/local/sbin/gestion-deploy.sh
+```
+
 Créer une clé dédiée depuis votre poste ou votre IDE :
 
 ```bash
