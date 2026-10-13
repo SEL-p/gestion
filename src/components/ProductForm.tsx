@@ -52,7 +52,7 @@ function describeCameraError(err: unknown): string {
       return message ?? 'La caméra nécessite une connexion sécurisée (HTTPS) ou un accès via localhost.';
     case 'NotAllowedError':
     case 'SecurityError':
-      return 'Accès à la caméra refusé. Autorisez la caméra dans les réglages du navigateur (ou de l’application), puis réessayez.';
+      return 'Accès à la caméra refusé. Dans Android, ouvrez Paramètres > Applications > ZEYNARMARKET > Autorisations > Appareil photo, puis choisissez « Autoriser ». Fermez et relancez l’application.';
     case 'NotFoundError':
     case 'DevicesNotFoundError':
     case 'OverconstrainedError':
@@ -950,6 +950,16 @@ export default function ProductForm({ existingCategories = [] }: ProductFormProp
                   className="btn btn-primary btn-sm"
                 >
                   Réessayer
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    stopCamera();
+                    nativeCameraInputRef.current?.click();
+                  }}
+                  className="btn btn-outline btn-sm"
+                >
+                  Utiliser l’appareil photo mobile
                 </button>
               </div>
             ) : (

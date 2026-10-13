@@ -3,16 +3,18 @@ export interface AppVersionInfo {
   versionCode: number; // Compteur officiel du nombre de mises à jour effectuées
   releaseDate: string;
   releaseNotes: string;
+  requiresUninstall: boolean;
   apkDownloadUrl: string;
 }
 
 // Source unique de vérité pour la version de l'application
 export const LATEST_APP_VERSION: AppVersionInfo = {
-  versionName: '1.2',
-  versionCode: 3, // Mise à jour #3 (Version 1.2 avec l'onglet Produits et la vue Liste & Tableau)
-  releaseDate: '09/10/2026',
+  versionName: '1.3',
+  versionCode: 4, // Mise à jour #4 (permission caméra et amélioration de la photo produit)
+  releaseDate: '13/10/2026',
   releaseNotes:
-    "Nouvel onglet « Produits » (liste & tableau complet des références) et bascule Cartes / Liste & Tableau dans le catalogue.",
+    'Autorisation caméra Android corrigée et possibilité de reprendre la photo avec l’appareil photo mobile.',
+  requiresUninstall: true,
   apkDownloadUrl: '/api/download/apk',
 };
 

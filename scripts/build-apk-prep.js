@@ -113,5 +113,30 @@ if (fs.existsSync(androidManifestPath)) {
   console.log('    Lancez « npx cap add android » puis relancez ce script pour injecter la permission CAMERA.');
 }
 
+// 4. Synchroniser la version native avec src/lib/version.ts
+const androidBuildPath = path.join(__dirname, '..', 'android', 'app', 'build.gradle');
+if (fs.existsSync(androidBuildPath)) {
+  const originalBuild = fs.readFileSync(androidBuildPath, 'utf8');
+  const versionedBuild = originalBuild
+    .replace(/versionCode\s+\d+/, 'versionCode 4')
+    .replace(/versionName\s+"[^"]+"/, 'versionName "1.3"');
+
+  if (versionedBuild === originalBuild && !/versionCode\s+4/.test(originalBuild)) {
+    throw new Error('Impossible de synchroniser versionCode dans android/app/build.gradle.');
+  }
+  if (!/versionCode\s+4/.test(versionedBuild) || !/versionName\s+"1\.3"/.test(versionedBuild)) {
+    throw new Error('La configuration de version Android est introuvable ou invalide.');
+  }
+
+  if (versionedBuild !== originalBuild) {
+    fs.writeFileSync(androidBuildPath, versionedBuild);
+    console.log('✅ Version Android synchronisée : 1.3 (code 4).');
+  } else {
+    console.log('✅ Version Android déjà à jour : 1.3 (code 4).');
+  }
+} else {
+  console.log('⚠️  android/app/build.gradle introuvable ; version Android non synchronisée.');
+}
+
 console.log('\n🚀 Tous les fichiers de préparation APK sont prêts !');
 console.log('📄 Consultez le fichier BUILD_APK.md pour générer votre fichier .APK en 1 clic.');

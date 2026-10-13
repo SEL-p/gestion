@@ -51,7 +51,8 @@ npx cap add android
 > manifeste **sans** la permission `CAMERA`, ce qui casse la prise de photo en direct dans la WebView.
 > Lancez `node scripts/build-apk-prep.js` juste après : le script réinjecte automatiquement
 > `<uses-permission android:name="android.permission.CAMERA" />` dans
-> `android/app/src/main/AndroidManifest.xml` (opération idempotente).
+> `android/app/src/main/AndroidManifest.xml` (opération idempotente) et synchronise la version
+> Android avec la version publiée par l’application.
 > Vérification possible sur l'APK compilé : `aapt2 dump badging app-debug.apk | findstr CAMERA`.
 
 ### Étape 3 : Configurer l'URL de votre serveur dans `capacitor.config.json`
@@ -76,3 +77,9 @@ Dans Android Studio :
 1. Allez dans le menu **Build** > **Build Bundle(s) / APK(s)** > **Build APK(s)**.
 2. Une fois la compilation terminée, cliquez sur **Locate**.
 3. Votre fichier `app-debug.apk` se trouve dans le dossier `android/app/build/outputs/apk/debug/`.
+
+Après avoir exécuté `npm run build:apk`, l’APK peut également être compilé depuis un terminal :
+```bash
+cd android
+gradlew.bat assembleDebug
+```

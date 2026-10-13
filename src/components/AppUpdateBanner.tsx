@@ -88,7 +88,9 @@ export default function AppUpdateBanner() {
             </span>
           </div>
           <div style={{ fontSize: '0.82rem', opacity: 0.92, marginTop: '2px' }}>
-            Installez cette mise à jour par-dessus votre ancienne application sans la désinstaller.
+            {LATEST_APP_VERSION.requiresUninstall
+              ? 'Désinstallez d’abord l’ancienne application, puis installez l’APK téléchargé. Vos données de vente restent sur le serveur.'
+              : 'Installez cette mise à jour par-dessus votre ancienne application sans la désinstaller.'}
           </div>
         </div>
       </div>
