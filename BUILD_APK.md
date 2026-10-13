@@ -47,6 +47,13 @@ npx cap init ZEYNARMARKET com.zeynarmarket.pos --web-dir public
 npx cap add android
 ```
 
+> ⚠️ **Permission caméra (obligatoire pour la photo en direct)** : `npx cap add android` régénère un
+> manifeste **sans** la permission `CAMERA`, ce qui casse la prise de photo en direct dans la WebView.
+> Lancez `node scripts/build-apk-prep.js` juste après : le script réinjecte automatiquement
+> `<uses-permission android:name="android.permission.CAMERA" />` dans
+> `android/app/src/main/AndroidManifest.xml` (opération idempotente).
+> Vérification possible sur l'APK compilé : `aapt2 dump badging app-debug.apk | findstr CAMERA`.
+
 ### Étape 3 : Configurer l'URL de votre serveur dans `capacitor.config.json`
 Éditez le fichier `capacitor.config.json` et remplacez par votre IP locale ou domaine :
 ```json

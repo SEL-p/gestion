@@ -43,6 +43,28 @@ const QUICK_TAGS = [
   '🥤 Boisson',
 ];
 
+// Turn a getUserMedia failure into an actionable message for the cashier
+function describeCameraError(err: unknown): string {
+  const { name, message } = (err ?? {}) as { name?: string; message?: string };
+
+  switch (name) {
+    case 'InsecureContextError':
+      return message ?? 'La caméra nécessite une connexion sécurisée (HTTPS) ou un accès via localhost.';
+    case 'NotAllowedError':
+    case 'SecurityError':
+      return 'Accès à la caméra refusé. Autorisez la caméra dans les réglages du navigateur (ou de l’application), puis réessayez.';
+    case 'NotFoundError':
+    case 'DevicesNotFoundError':
+    case 'OverconstrainedError':
+      return 'Aucune caméra détectée sur cet appareil. Utilisez « Appareil Photo Mobile » ou « Choisir un Fichier ».';
+    case 'NotReadableError':
+    case 'TrackStartError':
+      return 'La caméra est déjà utilisée par une autre application. Fermez-la puis réessayez.';
+    default:
+      return 'Impossible d’accéder à la caméra. Vérifiez les autorisations de votre navigateur ou utilisez l’appareil photo natif.';
+  }
+}
+
 export default function ProductForm({ existingCategories = [] }: ProductFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -73,6 +95,8 @@ export default function ProductForm({ existingCategories = [] }: ProductFormProp
   // Camera Capture Modal State
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [isCameraReady, setIsCameraReady] = useState(false);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -80,6 +104,8 @@ export default function ProductForm({ existingCategories = [] }: ProductFormProp
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  // Incremented on every start/stop so that a late getUserMedia resolution releases the camera
+  const cameraSessionRef = useRef(0);
 
   // Generate random barcode / SKU
   const generateSku = () => {
@@ -146,13 +172,31 @@ export default function ProductForm({ existingCategories = [] }: ProductFormProp
   // ==========================================
   // Camera In-Browser Stream Handler
   // ==========================================
+  const stopStream = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+    setCameraStream(null);
+    setIsCameraReady(false);
+  };
+
   const startCamera = async (mode: 'user' | 'environment' = facingMode) => {
+    const session = cameraSessionRef.current + 1;
+    cameraSessionRef.current = session;
+
     setCameraError(null);
     setIsCameraOpen(true);
+    stopStream();
 
     try {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((track) => track.stop());
+      if (!navigator.mediaDevices?.getUserMedia) {
+        // getUserMedia is unavailable outside a secure context (HTTPS / localhost)
+        const insecure = new Error(
+          'La caméra nécessite une connexion sécurisée (HTTPS) ou un accès via localhost.'
+        );
+        insecure.name = 'InsecureContextError';
+        throw insecure;
       }
 
       const constraints: MediaStreamConstraints = {
@@ -164,25 +208,24 @@ export default function ProductForm({ existingCategories = [] }: ProductFormProp
       };
 
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      streamRef.current = stream;
 
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
+      // The modal may have been closed while the permission prompt was displayed
+      if (session !== cameraSessionRef.current) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
       }
-    } catch (err: any) {
+
+      streamRef.current = stream;
+      setCameraStream(stream);
+    } catch (err) {
       console.error('Camera access error:', err);
-      setCameraError(
-        'Impossible d’accéder à la caméra. Vérifiez les autorisations de votre navigateur ou utilisez l’appareil photo natif.'
-      );
+      setCameraError(describeCameraError(err));
     }
   };
 
   const stopCamera = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
-      streamRef.current = null;
-    }
+    cameraSessionRef.current += 1;
+    stopStream();
     setIsCameraOpen(false);
     setCameraError(null);
   };
@@ -194,33 +237,51 @@ export default function ProductForm({ existingCategories = [] }: ProductFormProp
   };
 
   const capturePhoto = () => {
-    if (!videoRef.current || !canvasRef.current) return;
-
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    canvas.width = video.videoWidth || 640;
-    canvas.height = video.videoHeight || 480;
+    if (!video || !canvas || !isCameraReady) return;
+
+    const width = video.videoWidth;
+    const height = video.videoHeight;
+    if (!width || !height) {
+      setCameraError('La caméra n’est pas encore prête. Patientez une seconde puis réessayez.');
+      return;
+    }
+
+    canvas.width = width;
+    canvas.height = height;
 
     const ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    if (!ctx) return;
 
-      canvas.toBlob(
-        (blob) => {
-          if (blob) {
-            const fileName = `photo_${Date.now()}.jpg`;
-            const file = new File([blob], fileName, { type: 'image/jpeg' });
+    ctx.drawImage(video, 0, 0, width, height);
 
-            setImageFiles((prev) => [...prev, file]);
-            setImagePreviews((prev) => [...prev, URL.createObjectURL(file)]);
-            stopCamera();
-          }
-        },
-        'image/jpeg',
-        0.88
-      );
-    }
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          setCameraError('La photo n’a pas pu être générée. Réessayez.');
+          return;
+        }
+        const fileName = `photo_${Date.now()}.jpg`;
+        const file = new File([blob], fileName, { type: 'image/jpeg' });
+
+        setImageFiles((prev) => [...prev, file]);
+        setImagePreviews((prev) => [...prev, URL.createObjectURL(file)]);
+        stopCamera();
+      },
+      'image/jpeg',
+      0.88
+    );
   };
+
+  // Attach the granted stream to the <video> element as soon as both are available
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !cameraStream || video.srcObject === cameraStream) return;
+
+    video.srcObject = cameraStream;
+    video.play().catch((err) => console.warn('Lecture du flux caméra impossible:', err));
+  }, [cameraStream, isCameraOpen]);
 
   // Clean up camera stream on unmount
   useEffect(() => {
@@ -898,6 +959,8 @@ export default function ProductForm({ existingCategories = [] }: ProductFormProp
                   playsInline
                   autoPlay
                   muted
+                  onLoadedMetadata={() => setIsCameraReady(true)}
+                  onPlaying={() => setIsCameraReady(true)}
                   className="camera-video-stream"
                 />
 
@@ -919,7 +982,8 @@ export default function ProductForm({ existingCategories = [] }: ProductFormProp
                     type="button"
                     onClick={capturePhoto}
                     className="camera-shutter-btn"
-                    title="Prendre la photo"
+                    disabled={!isCameraReady}
+                    title={isCameraReady ? 'Prendre la photo' : 'Initialisation de la caméra…'}
                   >
                     <div className="shutter-inner" />
                   </button>

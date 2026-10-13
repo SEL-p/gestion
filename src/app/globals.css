@@ -2216,6 +2216,16 @@ h1, h2, h3, h4, h5, h6 {
   transform: scale(0.92);
 }
 
+/* Shutter stays disabled while the live stream is not ready (avoids black photos) */
+.camera-shutter-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.camera-shutter-btn:disabled:active {
+  transform: none;
+}
+
 .shutter-inner {
   width: 100%;
   height: 100%;
