@@ -99,6 +99,13 @@ sudo chown root:root /usr/local/sbin/gestion-deploy.sh
 sudo chmod 750 /usr/local/sbin/gestion-deploy.sh
 ```
 
+Le script installé sur le VPS est indépendant du dépôt. Après une modification de
+`deploy/remote-deploy.sh`, réinstallez-le avec les commandes ci-dessus avant le prochain
+déploiement GitHub. Le compte `deploy` étant limité par sudoers à l’exécution du script, GitHub
+ne peut pas remplacer lui-même ce fichier système. Ensuite, un push sur `main` lance le
+déploiement automatiquement ; un lancement manuel est aussi disponible dans **Actions** >
+**CI/CD production** > **Run workflow**.
+
 Créer une clé dédiée depuis votre poste ou votre IDE :
 
 ```bash

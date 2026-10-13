@@ -118,24 +118,74 @@ const androidBuildPath = path.join(__dirname, '..', 'android', 'app', 'build.gra
 if (fs.existsSync(androidBuildPath)) {
   const originalBuild = fs.readFileSync(androidBuildPath, 'utf8');
   const versionedBuild = originalBuild
-    .replace(/versionCode\s+\d+/, 'versionCode 4')
-    .replace(/versionName\s+"[^"]+"/, 'versionName "1.3"');
+    .replace(/versionCode\s+\d+/, 'versionCode 5')
+    .replace(/versionName\s+"[^"]+"/, 'versionName "1.4"');
 
-  if (versionedBuild === originalBuild && !/versionCode\s+4/.test(originalBuild)) {
+  if (versionedBuild === originalBuild && !/versionCode\s+5/.test(originalBuild)) {
     throw new Error('Impossible de synchroniser versionCode dans android/app/build.gradle.');
   }
-  if (!/versionCode\s+4/.test(versionedBuild) || !/versionName\s+"1\.3"/.test(versionedBuild)) {
+  if (!/versionCode\s+5/.test(versionedBuild) || !/versionName\s+"1\.4"/.test(versionedBuild)) {
     throw new Error('La configuration de version Android est introuvable ou invalide.');
   }
 
   if (versionedBuild !== originalBuild) {
     fs.writeFileSync(androidBuildPath, versionedBuild);
-    console.log('✅ Version Android synchronisée : 1.3 (code 4).');
+    console.log('✅ Version Android synchronisée : 1.4 (code 5).');
   } else {
-    console.log('✅ Version Android déjà à jour : 1.3 (code 4).');
+    console.log('✅ Version Android déjà à jour : 1.4 (code 5).');
   }
 } else {
   console.log('⚠️  android/app/build.gradle introuvable ; version Android non synchronisée.');
+}
+
+const mainActivityPath = path.join(
+  __dirname,
+  '..',
+  'android',
+  'app',
+  'src',
+  'main',
+  'java',
+  'com',
+  'zeynarmarket',
+  'pos',
+  'MainActivity.java'
+);
+
+if (fs.existsSync(mainActivityPath)) {
+  const originalActivity = fs.readFileSync(mainActivityPath, 'utf8');
+  if (!originalActivity.includes('ZeynarmarketApp/')) {
+    const onCreateCall = '        super.onCreate(savedInstanceState);';
+    if (!originalActivity.includes(onCreateCall)) {
+      throw new Error('Impossible d’ajouter la version Android dans le User-Agent de MainActivity.java.');
+    }
+    const versionedActivity = originalActivity.replace(
+      onCreateCall,
+      `${onCreateCall}
+
+        if (this.bridge != null && this.bridge.getWebView() != null) {
+            android.webkit.WebSettings webSettings = this.bridge.getWebView().getSettings();
+            String userAgent = webSettings.getUserAgentString();
+            if (!userAgent.contains("ZeynarmarketApp/")) {
+                try {
+                    android.content.pm.PackageInfo appInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
+                    long versionCode = androidx.core.content.pm.PackageInfoCompat.getLongVersionCode(appInfo);
+                    webSettings.setUserAgentString(userAgent + " ZeynarmarketApp/" + appInfo.versionName + " (Build/" + versionCode + ")");
+                } catch (android.content.pm.PackageManager.NameNotFoundException e) {
+                    throw new IllegalStateException("Unable to read app version", e);
+                }
+            }
+        }`
+    );
+    fs.writeFileSync(mainActivityPath, versionedActivity);
+    console.log('✅ Version de l’APK ajoutée au User-Agent Android.');
+  } else {
+    console.log('✅ User-Agent Android déjà versionné.');
+  }
+} else if (fs.existsSync(androidManifestPath)) {
+  throw new Error('MainActivity.java est introuvable : impossible de garantir le contrôle de version de l’APK.');
+} else {
+  console.log('⚠️  Initialisez Android avec « npx cap add android » pour ajouter le contrôle de version APK.');
 }
 
 console.log('\n🚀 Tous les fichiers de préparation APK sont prêts !');

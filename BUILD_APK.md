@@ -51,8 +51,9 @@ npx cap add android
 > manifeste **sans** la permission `CAMERA`, ce qui casse la prise de photo en direct dans la WebView.
 > Lancez `node scripts/build-apk-prep.js` juste après : le script réinjecte automatiquement
 > `<uses-permission android:name="android.permission.CAMERA" />` dans
-> `android/app/src/main/AndroidManifest.xml` (opération idempotente) et synchronise la version
-> Android avec la version publiée par l’application.
+> `android/app/src/main/AndroidManifest.xml`, synchronise la version Android avec la version
+> publiée et ajoute cette version au User-Agent de l’APK. Ce marqueur permet au serveur de bloquer
+> les anciennes versions sans se fier à une valeur de stockage modifiable par l’ancienne application.
 > Vérification possible sur l'APK compilé : `aapt2 dump badging app-debug.apk | findstr CAMERA`.
 
 ### Étape 3 : Configurer l'URL de votre serveur dans `capacitor.config.json`

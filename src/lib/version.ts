@@ -9,11 +9,11 @@ export interface AppVersionInfo {
 
 // Source unique de vérité pour la version de l'application
 export const LATEST_APP_VERSION: AppVersionInfo = {
-  versionName: '1.3',
-  versionCode: 4, // Mise à jour #4 (permission caméra et amélioration de la photo produit)
+  versionName: '1.4',
+  versionCode: 5, // Mise à jour #5 (permission caméra et mise à jour obligatoire)
   releaseDate: '13/10/2026',
   releaseNotes:
-    'Autorisation caméra Android corrigée et possibilité de reprendre la photo avec l’appareil photo mobile.',
+    'Mise à jour Android obligatoire, permission caméra corrigée et possibilité de reprendre la photo avec l’appareil photo mobile.',
   requiresUninstall: true,
   apkDownloadUrl: '/api/download/apk',
 };
@@ -59,19 +59,14 @@ export function getDeviceVersionState(): DeviceVersionState {
   const isNativeWebView =
     isNative ||
     window.location.search.includes('app=native') ||
-    sessionStorage.getItem('is_native_apk') === 'true' ||
     /\bwv\b|Android.*Version\/[\d.]+/i.test(ua);
 
   if (isNativeWebView) {
-    // Si l'utilisateur est dans l'APK mais sans l'UA enrichi (ex: première installation ou transition)
-    const storedCode = parseInt(localStorage.getItem('zeynarmarket_installed_version_code') || '0', 10);
-    const effectiveCode = storedCode > 0 ? storedCode : 2; // Si mise à jour v1.1 effectuée, code = 2
-
     return {
       isNativeApp: true,
-      installedVersionName: effectiveCode >= 3 ? '1.2' : effectiveCode >= 2 ? '1.1' : '1.0',
-      installedVersionCode: effectiveCode,
-      hasUpdateAvailable: effectiveCode < LATEST_APP_VERSION.versionCode,
+      installedVersionName: 'inconnue',
+      installedVersionCode: 0,
+      hasUpdateAvailable: true,
     };
   }
 
@@ -82,15 +77,4 @@ export function getDeviceVersionState(): DeviceVersionState {
     installedVersionCode: LATEST_APP_VERSION.versionCode,
     hasUpdateAvailable: false,
   };
-}
-
-export function markUpdateInstalled(versionCode: number = LATEST_APP_VERSION.versionCode) {
-  if (typeof window !== 'undefined') {
-    try {
-      localStorage.setItem('zeynarmarket_installed_version_code', versionCode.toString());
-      sessionStorage.setItem('zeynarmarket_update_dismissed', 'true');
-    } catch {
-      // ignore
-    }
-  }
 }

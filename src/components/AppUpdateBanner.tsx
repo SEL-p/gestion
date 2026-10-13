@@ -1,141 +1,101 @@
 'use client';
 
-import { useState, useSyncExternalStore } from 'react';
-import { Download, Sparkles, X } from 'lucide-react';
+import { useSyncExternalStore } from 'react';
+import { Download } from 'lucide-react';
 import { triggerApkDownload, APK_DOWNLOAD_URL } from '@/lib/apk-download';
-import { getDeviceVersionState, LATEST_APP_VERSION, markUpdateInstalled } from '@/lib/version';
+import { getDeviceVersionState, LATEST_APP_VERSION } from '@/lib/version';
 
 function subscribe() {
   return () => {};
 }
 
-function getShouldShowBanner() {
+function mustInstallUpdate() {
   if (typeof window === 'undefined') return false;
-  try {
-    const isDismissed = sessionStorage.getItem('zeynarmarket_update_dismissed') === 'true';
-    if (isDismissed) return false;
-
-    const state = getDeviceVersionState();
-    return state.hasUpdateAvailable;
-  } catch {
-    return false;
-  }
+  const state = getDeviceVersionState();
+  return state.isNativeApp && state.hasUpdateAvailable;
 }
 
 export default function AppUpdateBanner() {
-  const shouldShow = useSyncExternalStore(subscribe, getShouldShowBanner, () => false);
-  const [dismissedLocally, setDismissedLocally] = useState(false);
+  const updateRequired = useSyncExternalStore(subscribe, mustInstallUpdate, () => false);
 
-  // Si l'application est déjà à jour (v1.1 / Build 2), le message NE S'AFFICHE PAS !
-  if (!shouldShow || dismissedLocally) return null;
-
-  const handleDismiss = () => {
-    setDismissedLocally(true);
-    markUpdateInstalled();
-  };
-
-  const handleDownloadClick = (e: React.MouseEvent) => {
-    setDismissedLocally(true);
-    triggerApkDownload(e);
-  };
+  if (!updateRequired) return null;
 
   return (
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="required-app-update-title"
       style={{
-        margin: '0 0 1.25rem 0',
-        padding: '0.9rem 1.2rem',
-        borderRadius: '14px',
-        background: 'linear-gradient(135deg, rgba(0, 77, 64, 0.95) 0%, rgba(0, 121, 107, 0.95) 100%)',
-        color: '#ffffff',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '0.75rem',
-        boxShadow: '0 4px 20px rgba(0, 77, 64, 0.2)',
-        position: 'relative',
+        position: 'fixed',
+        inset: 0,
+        zIndex: 100000,
+        display: 'grid',
+        placeItems: 'center',
+        overflowY: 'auto',
+        padding: '1rem',
+        backgroundColor: 'rgba(15, 23, 42, 0.82)',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flex: 1, minWidth: '240px' }}>
+      <section
+        style={{
+          width: 'min(100%, 520px)',
+          maxHeight: '100%',
+          overflowY: 'auto',
+          padding: '1.5rem',
+          borderRadius: '18px',
+          backgroundColor: '#ffffff',
+          color: '#0f172a',
+          boxShadow: '0 24px 80px rgba(0, 0, 0, 0.35)',
+        }}
+      >
         <div
           style={{
-            width: '38px',
-            height: '38px',
-            borderRadius: '10px',
-            backgroundColor: 'rgba(255, 255, 255, 0.15)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
+            width: '48px',
+            height: '48px',
+            marginBottom: '1rem',
+            borderRadius: '14px',
+            display: 'grid',
+            placeItems: 'center',
+            backgroundColor: '#fff3cd',
+            color: '#8a5a00',
           }}
         >
-          <Sparkles size={20} color="#FFD54F" />
+          <Download size={24} />
         </div>
-        <div>
-          <div style={{ fontWeight: 700, fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span>Mise à jour disponible (v{LATEST_APP_VERSION.versionName})</span>
-            <span
-              style={{
-                fontSize: '0.7rem',
-                backgroundColor: 'rgba(255, 213, 79, 0.25)',
-                color: '#FFE082',
-                padding: '2px 6px',
-                borderRadius: '6px',
-                fontWeight: 600,
-              }}
-            >
-              Nouvelle version
-            </span>
-          </div>
-          <div style={{ fontSize: '0.82rem', opacity: 0.92, marginTop: '2px' }}>
-            {LATEST_APP_VERSION.requiresUninstall
-              ? 'Désinstallez d’abord l’ancienne application, puis installez l’APK téléchargé. Vos données de vente restent sur le serveur.'
-              : 'Installez cette mise à jour par-dessus votre ancienne application sans la désinstaller.'}
-          </div>
-        </div>
-      </div>
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <h1 id="required-app-update-title" style={{ margin: '0 0 0.65rem', fontSize: '1.35rem' }}>
+          Mise à jour obligatoire
+        </h1>
+        <p style={{ margin: '0 0 1rem', color: '#475569', lineHeight: 1.55 }}>
+          Cette version de l’application n’est plus prise en charge. Installez la version {LATEST_APP_VERSION.versionName}
+          pour continuer à utiliser ZEYNARMARKET.
+        </p>
+        <ol style={{ margin: '0 0 1.25rem', paddingLeft: '1.35rem', color: '#334155', lineHeight: 1.6 }}>
+          <li>Téléchargez le nouvel APK.</li>
+          <li>Désinstallez l’ancienne application, puis ouvrez le fichier téléchargé pour installer la mise à jour.</li>
+          <li>Vos produits et ventes restent enregistrés sur le serveur.</li>
+        </ol>
         <a
           href={APK_DOWNLOAD_URL}
-          onClick={handleDownloadClick}
-          className="btn"
+          onClick={triggerApkDownload}
           style={{
-            backgroundColor: '#ffffff',
-            color: '#004D40',
-            fontWeight: 700,
-            fontSize: '0.86rem',
-            padding: '0.5rem 1rem',
-            borderRadius: '10px',
+            width: '100%',
+            minHeight: '48px',
+            padding: '0.75rem 1rem',
+            borderRadius: '12px',
             display: 'inline-flex',
             alignItems: 'center',
-            gap: '0.4rem',
-            textDecoration: 'none',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-            transition: 'all 0.2s ease',
-          }}
-        >
-          <Download size={16} />
-          Mettre à jour
-        </a>
-        <button
-          type="button"
-          onClick={handleDismiss}
-          style={{
-            background: 'transparent',
-            border: 'none',
-            color: 'rgba(255,255,255,0.7)',
-            cursor: 'pointer',
-            padding: '0.4rem',
-            display: 'flex',
-            alignItems: 'center',
             justifyContent: 'center',
+            gap: '0.5rem',
+            backgroundColor: '#00796b',
+            color: '#ffffff',
+            fontWeight: 700,
+            textDecoration: 'none',
           }}
-          aria-label="Fermer"
         >
-          <X size={18} />
-        </button>
-      </div>
+          <Download size={18} />
+          Télécharger la version {LATEST_APP_VERSION.versionName}
+        </a>
+      </section>
     </div>
   );
 }

@@ -5,6 +5,7 @@ on:
     branches: [main]
   push:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -43,7 +44,7 @@ jobs:
 
   publish:
     name: Publier l’image OCI
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     needs: validate
     runs-on: ubuntu-latest
     outputs:
@@ -80,7 +81,7 @@ jobs:
 
   deploy:
     name: Déployer sur le VPS
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     needs: publish
     runs-on: ubuntu-latest
     environment: production

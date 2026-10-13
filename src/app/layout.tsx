@@ -5,6 +5,7 @@ import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { Inter } from 'next/font/google';
+import AppUpdateBanner from '@/components/AppUpdateBanner';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -73,6 +74,7 @@ export default async function RootLayout({
       </head>
       <body>
         <ThemeProvider>
+          <AppUpdateBanner />
           <div className="page-layout">
             {role && (
               <ResponsiveNavigation
