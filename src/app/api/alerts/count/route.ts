@@ -6,6 +6,7 @@ export async function GET() {
     // Count products where stock is <= minStock
     const count = await prisma.product.count({
       where: {
+        archivedAt: null,
         stock: {
           lte: prisma.product.fields.minStock
         }
@@ -19,6 +20,7 @@ export async function GET() {
     try {
       // Safer way for standard Prisma without previewFeatures fieldRef:
       const products = await prisma.product.findMany({
+        where: { archivedAt: null },
         select: { stock: true, minStock: true }
       });
       const lowStockCount = products.filter(p => p.stock <= p.minStock).length;

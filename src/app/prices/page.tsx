@@ -14,6 +14,7 @@ export default async function PricesPage() {
 
   try {
     products = await prisma.product.findMany({
+      where: { archivedAt: null },
       select: {
         id: true,
         name: true,

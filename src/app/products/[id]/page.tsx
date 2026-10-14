@@ -5,6 +5,8 @@ import { notFound } from 'next/navigation';
 import RestockForm from '@/components/RestockForm';
 import { getProductImageSrc } from '@/lib/product-images';
 import ProductImageUpload from '@/components/ProductImageUpload';
+import ProductArchiveButton from '@/components/ProductArchiveButton';
+import { cookies } from 'next/headers';
 
 export default async function ProductDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -17,6 +19,8 @@ export default async function ProductDetailsPage({ params }: { params: Promise<{
   if (!product) {
     return notFound();
   }
+  const cookieStore = await cookies();
+  const isAdmin = cookieStore.get('auth_role')?.value === 'admin';
 
   return (
     <div>
@@ -25,6 +29,21 @@ export default async function ProductDetailsPage({ params }: { params: Promise<{
       </div>
 
       <div className="glass-panel" style={{ padding: '2rem' }}>
+        {product.archivedAt && (
+          <div role="status" style={{ marginBottom: '1rem', padding: '0.75rem 1rem', borderRadius: 8, background: 'rgba(245, 158, 11, 0.15)' }}>
+            Produit archivé — il n&apos;est plus disponible dans le catalogue ni à la caisse.
+          </div>
+        )}
+        {isAdmin && (
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
+            <ProductArchiveButton
+              productId={product.id}
+              productName={product.name}
+              archived={Boolean(product.archivedAt)}
+              redirectAfterArchive
+            />
+          </div>
+        )}
         <div className="grid grid-cols-2">
           {/* Galerie d'images */}
           <div>
@@ -35,7 +54,7 @@ export default async function ProductDetailsPage({ params }: { params: Promise<{
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>Aucune image</div>
               )}
             </div>
-            <ProductImageUpload productId={product.id} />
+            {!product.archivedAt && <ProductImageUpload productId={product.id} />}
             
             {product.images.length > 1 && (
               <div style={{ display: 'flex', gap: '1rem', overflowX: 'auto' }}>
@@ -62,7 +81,7 @@ export default async function ProductDetailsPage({ params }: { params: Promise<{
                 }}>
                   {product.stock > 0 ? `${product.stock} en stock` : 'Rupture de stock'}
                 </span>
-                <RestockForm productId={product.id} />
+                {!product.archivedAt && <RestockForm productId={product.id} />}
               </div>
             </div>
             

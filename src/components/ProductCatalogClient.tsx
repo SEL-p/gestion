@@ -19,6 +19,7 @@ import {
   LayoutGrid,
   List,
   Boxes,
+  Archive,
 } from 'lucide-react';
 import { getProductImageSrc } from '@/lib/product-images';
 
@@ -47,6 +48,7 @@ interface ProductCatalogClientProps {
   pageTitle?: string;
   /** Sous-titre affiché en haut de page */
   pageSubtitle?: string;
+  canManageProducts?: boolean;
   /**
    * "catalog" (défaut) : catalogue complet (titre, actions, KPI, filtres, cartes ou tableau).
    * "products-only" : vitrine des articles enregistrés (bannière, recherche/filtres, cartes par
@@ -61,6 +63,7 @@ export default function ProductCatalogClient({
   initialViewMode = 'grid',
   pageTitle = 'Catalogue & Rayons Supermarché',
   pageSubtitle = 'Gérez vos références articles, contrôlez les stocks et préparez vos rayons.',
+  canManageProducts = false,
   variant = 'catalog',
 }: ProductCatalogClientProps) {
   // Mode "Produits" : on n'affiche que la liste des produits (cf. .products-only-view)
@@ -136,6 +139,12 @@ export default function ProductCatalogClient({
           </div>
 
           <div className="plp-hero-actions">
+            {canManageProducts && (
+              <Link href="/products/archived" className="btn btn-outline plp-hero-btn">
+                <Archive size={16} />
+                <span>Archivés</span>
+              </Link>
+            )}
             <Link href="/api/csv" className="btn btn-outline plp-hero-btn" target="_blank" download>
               <Download size={16} />
               <span>Exporter CSV</span>
@@ -174,6 +183,12 @@ export default function ProductCatalogClient({
             </p>
           </div>
           <div className="catalog-actions-group">
+            {canManageProducts && (
+              <Link href="/products/archived" className="btn btn-outline">
+                <Archive size={16} />
+                <span>Archivés</span>
+              </Link>
+            )}
             <Link href="/api/csv" className="btn btn-outline btn-export" target="_blank" download>
               <Download size={16} />
               <span>Exporter CSV</span>

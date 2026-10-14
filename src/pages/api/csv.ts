@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const products = await prisma.product.findMany({
+      where: { archivedAt: null },
       include: { images: true }
     });
 

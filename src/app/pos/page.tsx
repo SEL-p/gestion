@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 export default async function POSPage() {
   const products = await prisma.product.findMany({
     include: { images: true },
-    where: { stock: { gt: 0 } }, // Only sell products that are in stock
+    where: { stock: { gt: 0 }, archivedAt: null },
     orderBy: { name: 'asc' }
   });
 

@@ -91,7 +91,7 @@ export async function createProduct(formData: FormData) {
 export async function updateStock(productId: string, additionalStock: number) {
   if (additionalStock <= 0) throw new Error('La quantité à ajouter doit être supérieure à 0.');
 
-  const product = await prisma.product.findUnique({ where: { id: productId } });
+  const product = await prisma.product.findFirst({ where: { id: productId, archivedAt: null } });
   if (!product) throw new Error('Produit introuvable.');
 
   await prisma.product.update({
@@ -101,6 +101,47 @@ export async function updateStock(productId: string, additionalStock: number) {
 
   revalidatePath('/products/[id]', 'page');
   revalidatePath('/');
+  return { success: true };
+}
+
+export async function setProductArchived(productId: string, archived: boolean) {
+  const cookieStore = await cookies();
+  if (cookieStore.get('auth_role')?.value !== 'admin') {
+    return { success: false, error: 'Seul un administrateur peut archiver ou restaurer un produit.' };
+  }
+  if (!productId) {
+    return { success: false, error: 'Produit introuvable.' };
+  }
+
+  const product = await prisma.product.findUnique({
+    where: { id: productId },
+    select: { id: true, archivedAt: true },
+  });
+  if (!product) {
+    return { success: false, error: 'Produit introuvable.' };
+  }
+  if (Boolean(product.archivedAt) === archived) {
+    return {
+      success: false,
+      error: archived ? 'Ce produit est déjà archivé.' : 'Ce produit est déjà actif.',
+    };
+  }
+
+  await prisma.product.update({
+    where: { id: productId },
+    data: { archivedAt: archived ? new Date() : null },
+  });
+
+  revalidatePath('/');
+  revalidatePath('/products');
+  revalidatePath('/products/list');
+  revalidatePath('/products/archived');
+  revalidatePath(`/products/${productId}`);
+  revalidatePath('/prices');
+  revalidatePath('/pos');
+  revalidatePath('/alerts');
+  revalidatePath('/api/csv');
+
   return { success: true };
 }
 

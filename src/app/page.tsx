@@ -56,6 +56,7 @@ export default async function DashboardPage() {
 
     // Produits en rupture
     const allProducts = await prisma.product.findMany({
+      where: { archivedAt: null },
       select: { id: true, name: true, stock: true, minStock: true },
     });
     lowStockItems = allProducts.filter((p) => p.stock <= p.minStock);

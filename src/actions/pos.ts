@@ -33,7 +33,7 @@ export async function processCheckout(
   // 1. Fetch current products to validate stock and prices
   const productIds = items.map(i => i.productId);
   const products = await prisma.product.findMany({
-    where: { id: { in: productIds } }
+    where: { id: { in: productIds }, archivedAt: null }
   });
 
   if (products.length !== productIds.length) {

@@ -8,6 +8,7 @@ export default async function AlertsPage() {
 
   try {
     const allProducts = await prisma.product.findMany({
+      where: { archivedAt: null },
       include: { images: true },
       orderBy: { stock: 'asc' },
     });
