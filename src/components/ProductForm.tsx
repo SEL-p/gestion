@@ -43,6 +43,59 @@ const QUICK_TAGS = [
   '🥤 Boisson',
 ];
 
+const MAX_PRODUCT_IMAGE_PAYLOAD_SIZE = 8 * 1024 * 1024;
+
+async function prepareProductImage(file: File): Promise<File> {
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+    throw new Error('Utilisez une photo au format JPEG, PNG ou WebP.');
+  }
+
+  let bitmap: ImageBitmap;
+  try {
+    bitmap = await createImageBitmap(file);
+  } catch {
+    throw new Error('Cette photo ne peut pas être préparée. Choisissez une image JPEG, PNG ou WebP.');
+  }
+
+  try {
+    const maxDimension = 1600;
+    const scale = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+
+    const context = canvas.getContext('2d');
+    if (!context) {
+      throw new Error('Impossible de préparer la photo sur cet appareil.');
+    }
+    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+
+    const encode = (type: string) =>
+      new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob(
+          (result) => {
+            if (result) resolve(result);
+            else reject(new Error('Impossible de compresser la photo. Réessayez avec une autre image.'));
+          },
+          type,
+          0.82
+        );
+      });
+    let blob = await encode('image/webp');
+    if (blob.type !== 'image/webp' && blob.type !== 'image/jpeg') {
+      blob = await encode('image/jpeg');
+    }
+
+    const extension = blob.type === 'image/webp' ? 'webp' : 'jpg';
+    return new File([blob], `product-photo.${extension}`, {
+      type: blob.type,
+      lastModified: Date.now(),
+    });
+  } finally {
+    bitmap.close();
+  }
+}
+
 // Turn a getUserMedia failure into an actionable message for the cashier
 function describeCameraError(err: unknown): string {
   const { name, message } = (err ?? {}) as { name?: string; message?: string };
@@ -326,9 +379,15 @@ export default function ProductForm({ existingCategories = [] }: ProductFormProp
 
       // Ensure all captured camera photos and selected files are included
       formData.delete('images');
-      imageFiles.forEach((file) => {
-        formData.append('images', file);
-      });
+      let totalImageSize = 0;
+      for (const image of imageFiles) {
+        const preparedImage = await prepareProductImage(image);
+        totalImageSize += preparedImage.size;
+        if (totalImageSize > MAX_PRODUCT_IMAGE_PAYLOAD_SIZE) {
+          throw new Error('Les photos restent trop volumineuses après compression. Retirez une photo puis réessayez.');
+        }
+        formData.append('images', preparedImage);
+      }
 
       await createProduct(formData);
     } catch (err: any) {
