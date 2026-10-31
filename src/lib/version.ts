@@ -11,7 +11,7 @@ export interface AppVersionInfo {
 export const LATEST_APP_VERSION: AppVersionInfo = {
   versionName: '1.5',
   versionCode: 6, // Mise à jour #6 : Supermarché Tout-en-Un & Gestion de tous les rayons
-  releaseDate: '24/10/2026',
+  releaseDate: '31/10/2026',
   releaseNotes:
     'Mise à jour Supermarché ZEYNARMARKET : Prise en charge intégrale de tous vos rayons (Alimentaire, Épicerie, Boissons, Frais, Hygiène, Entretien), ajout rapide avec conversion automatique prix gros / détail et suivi des marges en temps réel.',
   requiresUninstall: false,
@@ -35,10 +35,25 @@ export function getDeviceVersionState(): DeviceVersionState {
     };
   }
 
+  // 0. Si l'utilisateur a déjà ignoré ou fermé cette mise à jour
+  try {
+    const isDismissed = localStorage.getItem(`dismissed_update_${LATEST_APP_VERSION.versionCode}`) === 'true';
+    if (isDismissed) {
+      return {
+        isNativeApp: false,
+        installedVersionName: LATEST_APP_VERSION.versionName,
+        installedVersionCode: LATEST_APP_VERSION.versionCode,
+        hasUpdateAvailable: false,
+      };
+    }
+  } catch {
+    // ignore localStorage error
+  }
+
   const ua = navigator.userAgent || '';
 
   // 1. Détection par l'User-Agent Android personnalisé
-  // ex: "ZeynarmarketApp/1.1 (Build/2)"
+  // ex: "ZeynarmarketApp/1.5 (Build/6)"
   const match = ua.match(/ZeynarmarketApp\/([0-9.]+)\s*\(Build\/(\d+)\)/i);
   if (match) {
     const installedVersionName = match[1];
@@ -51,28 +66,24 @@ export function getDeviceVersionState(): DeviceVersionState {
     };
   }
 
-  // 2. Détection par environnement natif Capacitor / WebView Android
-  const isNative =
+  // 2. Détection par environnement natif Capacitor
+  const isCapacitorNative =
     typeof (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform === 'function' &&
     (window as unknown as { Capacitor: { isNativePlatform: () => boolean } }).Capacitor.isNativePlatform();
 
-  const isNativeWebView =
-    isNative ||
-    window.location.search.includes('app=native') ||
-    /\bwv\b|Android.*Version\/[\d.]+/i.test(ua);
-
-  if (isNativeWebView) {
+  // Si on est dans Capacitor sans code de build dans l'UA mais que l'URL force la mise à jour
+  if (window.location.search.includes('check_update=true')) {
     return {
       isNativeApp: true,
-      installedVersionName: 'inconnue',
-      installedVersionCode: 0,
+      installedVersionName: '1.4',
+      installedVersionCode: 5,
       hasUpdateAvailable: true,
     };
   }
 
-  // 3. Navigateur Web Desktop / Mobile : toujours à jour avec le serveur
+  // 3. Par défaut pour le web mobile / desktop et les webviews standards à jour
   return {
-    isNativeApp: false,
+    isNativeApp: isCapacitorNative,
     installedVersionName: LATEST_APP_VERSION.versionName,
     installedVersionCode: LATEST_APP_VERSION.versionCode,
     hasUpdateAvailable: false,
