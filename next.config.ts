@@ -8,8 +8,9 @@ const nextConfig: NextConfig = {
     },
   },
   serverExternalPackages: ['sharp'],
-  // Utilise `.next` par défaut (requis par Docker standalone), ou un dossier alternatif si spécifié
-  ...(process.env.NEXT_DIST_DIR ? { distDir: process.env.NEXT_DIST_DIR } : {}),
+  // Permet d'utiliser un dossier de build alternatif si `.next` est verrouillé
+  // (ex. sur volume exFAT) : NEXT_DIST_DIR=.next-work npm run dev
+  distDir: process.env.NEXT_DIST_DIR || '.next',
 };
 
 export default nextConfig;
