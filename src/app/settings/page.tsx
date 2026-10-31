@@ -9,24 +9,26 @@ export default async function SettingsPage() {
   const settings = await getStoreSettings();
 
   return (
-    <div className="settings-page-container">
-      <header className="page-header-standard">
-        <div>
-          <div className="page-badge-standard">
-            <Settings size={16} />
+    <div className="settings-redesign-page">
+      <div className="settings-hero-banner">
+        <div className="settings-hero-top">
+          <div className="settings-badge">
+            <Settings size={14} />
             <span>Configuration Système</span>
           </div>
-          <h1 className="page-title-standard">Paramètres du Supermarché</h1>
-          <p className="page-subtitle-standard">
-            Personnalisez vos reçus de caisse, votre nom commercial et exportez vos données de gestion.
-          </p>
         </div>
-      </header>
+        <h1 className="settings-hero-title">Paramètres du Supermarché</h1>
+        <p className="settings-hero-subtitle">
+          Personnalisez vos coordonnées, vos reçus de caisse et exportez vos données de gestion en toute sécurité.
+        </p>
+      </div>
 
-      <SettingsForm initialData={settings} />
+      <div className="settings-content-wrapper">
+        <SettingsForm initialData={settings} />
 
-      <div style={{ marginTop: '2.5rem' }}>
-        <ExportButton />
+        <div style={{ marginTop: '2rem' }}>
+          <ExportButton />
+        </div>
       </div>
     </div>
   );

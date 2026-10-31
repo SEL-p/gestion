@@ -2,19 +2,15 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Product, ProductImage } from '@prisma/client';
 import { getProductImageSrc } from '@/lib/product-images';
+import { calculateStockBreakdown } from '@/lib/stock';
 
 type ProductWithImages = Product & { images: ProductImage[] };
 
 export default function ProductCard({ product }: { product: ProductWithImages }) {
   const mainImage = product.images.length > 0 ? product.images[0].url : null;
 
-  const cartons = product.unitsPerCarton > 1 ? Math.floor(product.stock / product.unitsPerCarton) : 0;
-  const remainingUnits = product.unitsPerCarton > 1 ? product.stock % product.unitsPerCarton : product.stock;
-  
-  const stockText = product.stock <= 0 ? 'Rupture' : 
-    (product.unitsPerCarton > 1 
-      ? (cartons > 0 ? `${cartons} casier(s)` : '') + (remainingUnits > 0 ? ` ${remainingUnits} btl` : '')
-      : `${product.stock} en stock`);
+  const stockInfo = calculateStockBreakdown(product.stock, product.unitsPerCarton);
+  const stockText = stockInfo.summaryText;
 
   return (
     <div className="glass-card">

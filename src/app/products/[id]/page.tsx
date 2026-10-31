@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import RestockForm from '@/components/RestockForm';
 import { getProductImageSrc } from '@/lib/product-images';
+import { calculateStockBreakdown } from '@/lib/stock';
 import ProductImageUpload from '@/components/ProductImageUpload';
 import ProductArchiveButton from '@/components/ProductArchiveButton';
 import { cookies } from 'next/headers';
@@ -69,21 +70,33 @@ export default async function ProductDetailsPage({ params }: { params: Promise<{
 
           {/* Informations Produit */}
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <h1>{product.name}</h1>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                <span style={{ 
-                  padding: '0.4rem 1rem', 
-                  borderRadius: '20px', 
-                  backgroundColor: product.stock > 0 ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)',
-                  color: product.stock > 0 ? '#4ade80' : '#f87171',
-                  fontWeight: 'bold'
-                }}>
-                  {product.stock > 0 ? `${product.stock} en stock` : 'Rupture de stock'}
-                </span>
-                {!product.archivedAt && <RestockForm productId={product.id} />}
-              </div>
-            </div>
+            {(() => {
+              const stockInfo = calculateStockBreakdown(product.stock, product.unitsPerCarton);
+              return (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <h1>{product.name}</h1>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.35rem' }}>
+                    <span style={{ 
+                      padding: '0.4rem 1rem', 
+                      borderRadius: '20px', 
+                      backgroundColor: product.stock > 0 ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+                      color: product.stock > 0 ? '#15803d' : '#b91c1c',
+                      fontWeight: 'bold'
+                    }}>
+                      {product.stock > 0 ? stockInfo.summaryText : 'Rupture de stock'}
+                    </span>
+                    {stockInfo.isPack && (
+                      <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                        {stockInfo.detailedText}
+                      </span>
+                    )}
+                    {!product.archivedAt && (
+                      <RestockForm productId={product.id} unitsPerCarton={product.unitsPerCarton} />
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
             
             <p style={{ color: 'var(--accent-color)', fontSize: '1.2rem', marginBottom: '2rem' }}>SKU: {product.sku}</p>
 

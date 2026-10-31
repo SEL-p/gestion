@@ -2,7 +2,8 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Menu, Bell, Info, ShoppingBag } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { Menu, Bell, Info } from 'lucide-react';
 
 interface MobileTopBarProps {
   storeName?: string;
@@ -17,44 +18,67 @@ export default function MobileTopBar({
   unreadAlertsCount = 0,
   onOpenDrawer,
 }: MobileTopBarProps) {
+  const pathname = usePathname();
+  const isNewProduct = pathname === '/products/new';
+  const isProductsPage = pathname === '/products' || pathname === '/products/list';
+  const isPricesPage = pathname === '/prices';
+  const isPosPage = pathname === '/pos';
+
+  if (isProductsPage || isPricesPage || isPosPage) {
+    return null;
+  }
+
+  if (isNewProduct) {
+    return (
+      <header className="mobile-top-bar mobile-top-bar-new-product">
+        <div className="mobile-top-bar-content new-product-header-content">
+          <button
+            type="button"
+            onClick={onOpenDrawer}
+            className="mobile-icon-btn hamburger-btn"
+            aria-label="Ouvrir le menu"
+          >
+            <Menu size={24} color="#ffffff" />
+          </button>
+
+          <h1 className="new-product-header-title">Ajouter un produit</h1>
+
+          <Link href="/products" className="new-product-header-cancel">
+            Annuler
+          </Link>
+        </div>
+      </header>
+    );
+  }
+
   return (
     <header className="mobile-top-bar">
       <div className="mobile-top-bar-content">
-        {/* Left: Hamburger Menu Button */}
-        <button
-          type="button"
-          onClick={onOpenDrawer}
-          className="mobile-icon-btn hamburger-btn"
-          aria-label="Ouvrir le menu"
-        >
-          <Menu size={26} color="#ffffff" />
-        </button>
+        {/* Left: Hamburger Menu Button + Store Name & Greeting */}
+        <div className="mobile-top-bar-left">
+          <button
+            type="button"
+            onClick={onOpenDrawer}
+            className="mobile-icon-btn hamburger-btn"
+            aria-label="Ouvrir le menu"
+          >
+            <Menu size={24} color="#ffffff" />
+          </button>
 
-        {/* Center: Brand & User Greeting */}
-        <div className="mobile-brand-info">
-          <div className="mobile-brand-title">
-            <img
-              src="/logo.png"
-              alt="Logo"
-              width={26}
-              height={26}
-              style={{ borderRadius: '6px', objectFit: 'contain', marginRight: '6px', background: '#fff', padding: '1px' }}
-            />
-            <span>{storeName.toUpperCase()}</span>
-            <Info size={14} className="info-icon" />
-          </div>
-          <div className="mobile-user-greeting">
-            Bonjour, {userName}
+          <div className="mobile-brand-info">
+            <div className="mobile-brand-title">
+              <span>{storeName.toUpperCase()}</span>
+              <Info size={15} className="info-icon" />
+            </div>
+            <div className="mobile-user-greeting">
+              Bonjour, {userName}
+            </div>
           </div>
         </div>
 
-        {/* Right: Actions (Caisse Rapide + Notifications Bell) */}
+        {/* Right: Notifications Bell with Alert Badge */}
         <div className="mobile-top-actions">
-          <Link href="/pos" className="mobile-quick-pos-btn" title="Caisse">
-            <ShoppingBag size={18} color="#ffffff" />
-          </Link>
-          
-          <Link href="/alerts" className="mobile-icon-btn notif-btn" aria-label="Alertes">
+          <Link href="/alerts" className="mobile-icon-btn notif-btn" aria-label="Alertes" title="Alertes de stock">
             <Bell size={22} color="#ffffff" />
             {unreadAlertsCount > 0 && (
               <span className="notif-badge">{unreadAlertsCount > 9 ? '9+' : unreadAlertsCount}</span>

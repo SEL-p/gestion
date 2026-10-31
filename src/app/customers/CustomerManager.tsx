@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import Link from 'next/link';
 import { addCustomer } from '@/actions/customers';
 import {
   UserPlus,
@@ -12,7 +13,8 @@ import {
   AlertCircle,
   CreditCard,
   QrCode,
-  Tag,
+  ArrowRight,
+  TrendingUp,
 } from 'lucide-react';
 
 interface Customer {
@@ -22,6 +24,7 @@ interface Customer {
   phone?: string | null;
   totalSpent: number;
   points: number;
+  debtBalance?: number;
   createdAt?: Date | string;
 }
 
@@ -30,6 +33,7 @@ export default function CustomerManager({
 }: {
   initialCustomers: Customer[];
 }) {
+  const [customers, setCustomers] = useState(initialCustomers);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
@@ -37,6 +41,8 @@ export default function CustomerManager({
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [search, setSearch] = useState('');
+  const [filterType, setFilterType] = useState<'all' | 'debt' | 'points'>('all');
+  const [showAddModal, setShowAddModal] = useState(false);
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,220 +57,313 @@ export default function CustomerManager({
       code: code.trim() || undefined,
     });
 
-    if (res.success) {
+    if (res.success && res.customer) {
+      const created = {
+        ...res.customer,
+        totalSpent: 0,
+        points: 0,
+        debtBalance: 0,
+      };
+      setCustomers((prev) => [created, ...prev]);
       setName('');
       setPhone('');
       setCode('');
-      setSuccess(`Client "${res.customer?.name}" enregistré avec le code ${res.customer?.code} !`);
+      setSuccess(`Client "${res.customer.name}" enregistré avec le code ${res.customer.code} !`);
+      setShowAddModal(false);
       setTimeout(() => setSuccess(''), 4000);
-      setTimeout(() => window.location.reload(), 1200);
     } else {
       setError(res.error || 'Erreur lors de l’enregistrement du client.');
     }
     setLoading(false);
   };
 
-  const filteredCustomers = initialCustomers.filter((c) => {
-    const q = search.toLowerCase();
-    return (
-      c.name.toLowerCase().includes(q) ||
-      (c.phone && c.phone.toLowerCase().includes(q)) ||
-      (c.code && c.code.toLowerCase().includes(q))
-    );
-  });
+  const filteredCustomers = useMemo(() => {
+    const q = search.toLowerCase().trim();
+    return customers.filter((c) => {
+      const matchesSearch =
+        !q ||
+        c.name.toLowerCase().includes(q) ||
+        (c.phone && c.phone.toLowerCase().includes(q)) ||
+        (c.code && c.code.toLowerCase().includes(q));
 
-  const totalClients = initialCustomers.length;
-  const totalTurnover = initialCustomers.reduce((acc, c) => acc + (c.totalSpent || 0), 0);
-  const totalPoints = initialCustomers.reduce((acc, c) => acc + (c.points || 0), 0);
+      if (!matchesSearch) return false;
+      if (filterType === 'debt') return (c.debtBalance || 0) > 0;
+      if (filterType === 'points') return c.points > 0;
+      return true;
+    });
+  }, [customers, search, filterType]);
+
+  const totalClients = customers.length;
+  const totalTurnover = customers.reduce((acc, c) => acc + (c.totalSpent || 0), 0);
+  const totalPoints = customers.reduce((acc, c) => acc + (c.points || 0), 0);
+  const totalDebt = customers.reduce((acc, c) => acc + (c.debtBalance || 0), 0);
 
   return (
-    <div className="customers-layout-grid">
-      {/* Left Column: Register New Client */}
-      <div className="customer-form-card">
-        <div className="card-top-icon-title">
-          <div className="icon-badge-teal">
-            <UserPlus size={20} />
-          </div>
+    <div className="cust-redesign-page">
+      {/* ── 1. Top Forest Teal Header ─────────────────────────────────────── */}
+      <header className="cust-top-header">
+        <div className="cust-header-left">
+          <Link href="/pos" className="cust-back-btn" title="Retour caisse">
+            ← <span>Caisse POS</span>
+          </Link>
           <div>
-            <h2 className="card-main-title">Nouveau Client Fidèle</h2>
-            <p className="card-sub-title">Attribuez un code unique ou une carte fidélité</p>
-          </div>
-        </div>
-
-        {error && (
-          <div className="alert-box alert-danger">
-            <AlertCircle size={18} />
-            <span>{error}</span>
-          </div>
-        )}
-
-        {success && (
-          <div className="alert-box alert-success">
-            <CheckCircle2 size={18} />
-            <span>{success}</span>
-          </div>
-        )}
-
-        <form onSubmit={handleAdd} className="customer-form">
-          <div className="form-group">
-            <label className="form-label">
-              Nom & Prénom <span className="text-req">*</span>
-            </label>
-            <input
-              type="text"
-              className="form-control form-control-lg"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              placeholder="Ex: Kouamé Jean-Baptiste"
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Code Client / N° Carte (Optionnel)</label>
-            <div className="input-icon-wrapper">
-              <CreditCard size={16} className="field-icon" />
-              <input
-                type="text"
-                className="form-control input-with-left-icon"
-                value={code}
-                onChange={(e) => setCode(e.target.value.toUpperCase())}
-                placeholder="Ex: CLT-1001 (Laissez vide pour auto)"
-              />
-            </div>
-            <span style={{ fontSize: '0.75rem', color: 'var(--slate-500)', marginTop: '0.2rem', display: 'block' }}>
-              💡 Si vous ne mettez rien, un code unique (ex: CLT-8492) sera généré automatiquement.
+            <h1 className="cust-main-title">Clients & Fidélité</h1>
+            <span className="cust-count-sub">
+              {totalClients} client(s) • Suivi des comptes & crédits
             </span>
           </div>
-
-          <div className="form-group">
-            <label className="form-label">Numéro de Téléphone (Optionnel)</label>
-            <div className="input-icon-wrapper">
-              <Phone size={16} className="field-icon" />
-              <input
-                type="tel"
-                className="form-control input-with-left-icon"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="Ex: +225 07 00 00 00 00"
-              />
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            className="btn btn-primary btn-block btn-lg"
-            disabled={loading}
-          >
-            <UserPlus size={18} />
-            <span>{loading ? 'Enregistrement...' : 'Enregistrer le client'}</span>
-          </button>
-        </form>
-
-        {/* Loyalty Info Card */}
-        <div className="loyalty-info-box">
-          <Award size={20} color="#D97706" />
-          <div>
-            <strong>Programme Fidélité & Carte Client</strong>
-            <p>Le code permet d&apos;identifier le client en caisse et de créditer automatiquement ses points.</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Right Column: Customers List */}
-      <div className="customers-list-card">
-        {/* KPI Mini Row */}
-        <div className="customer-kpi-mini-grid">
-          <div className="kpi-mini-item">
-            <span className="lbl">Clients Actifs</span>
-            <span className="val">{totalClients}</span>
-          </div>
-          <div className="kpi-mini-item">
-            <span className="lbl">Volume Acheté</span>
-            <span className="val">{totalTurnover.toLocaleString('fr-FR')} FCFA</span>
-          </div>
-          <div className="kpi-mini-item">
-            <span className="lbl">Points Cumulés</span>
-            <span className="val text-amber">{totalPoints} pts</span>
-          </div>
         </div>
 
-        {/* Search */}
-        <div className="customer-search-bar">
-          <Search size={17} className="search-icon" />
+        <button
+          type="button"
+          onClick={() => setShowAddModal(true)}
+          className="cust-btn-new-modal"
+        >
+          <UserPlus size={16} />
+          <span>Nouveau Client</span>
+        </button>
+      </header>
+
+      {/* ── Toast Alerts ─────────────────────────────────────────────────── */}
+      {error && (
+        <div className="cust-alert is-error">
+          <AlertCircle size={18} />
+          <span>{error}</span>
+          <button type="button" onClick={() => setError('')}>×</button>
+        </div>
+      )}
+
+      {success && (
+        <div className="cust-alert is-success">
+          <CheckCircle2 size={18} />
+          <span>{success}</span>
+          <button type="button" onClick={() => setSuccess('')}>×</button>
+        </div>
+      )}
+
+      {/* ── 2. KPI Summary Cards ─────────────────────────────────────────── */}
+      <section className="cust-kpis-grid">
+        <div className="cust-kpi-card">
+          <span className="cust-kpi-lbl">Clients Enregistrés</span>
+          <strong className="cust-kpi-val text-dark">{totalClients}</strong>
+          <span className="cust-kpi-hint">comptes actifs</span>
+        </div>
+
+        <div className="cust-kpi-card">
+          <span className="cust-kpi-lbl">Volume Dépensé</span>
+          <strong className="cust-kpi-val text-teal">
+            {totalTurnover.toLocaleString('fr-FR')} F
+          </strong>
+          <span className="cust-kpi-hint">chiffre fidélisé</span>
+        </div>
+
+        <div className="cust-kpi-card">
+          <span className="cust-kpi-lbl">Dette Globale en Cours</span>
+          <strong className={`cust-kpi-val ${totalDebt > 0 ? 'text-danger' : 'text-success'}`}>
+            {totalDebt.toLocaleString('fr-FR')} F
+          </strong>
+          <span className="cust-kpi-hint">à recouvrer</span>
+        </div>
+      </section>
+
+      {/* ── 3. Search & Filters Bar ────────────────────────────────────────── */}
+      <div className="cust-toolbar">
+        <div className="cust-search-box">
+          <Search size={18} className="cust-search-icon" />
           <input
             type="text"
-            placeholder="Rechercher par Nom, Code client (ex: CLT-1001) ou Téléphone..."
+            placeholder="Rechercher par nom, téléphone ou code client..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="customer-search-input"
+            className="cust-search-input"
           />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch('')}
+              className="cust-search-clear"
+            >
+              ×
+            </button>
+          )}
         </div>
 
-        {/* Table */}
-        <div className="table-responsive-wrapper">
-          <table className="pro-table">
-            <thead>
-              <tr>
-                <th>Code Client</th>
-                <th>Nom Client</th>
-                <th>Téléphone</th>
-                <th>Total Dépensé</th>
-                <th>Fidélité</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredCustomers.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="table-empty-row">
-                    <Users size={36} color="#94A3B8" />
-                    <p>Aucun client trouvé.</p>
-                  </td>
-                </tr>
-              ) : (
-                filteredCustomers.map((c) => (
-                  <tr key={c.id}>
-                    <td>
-                      <span className="badge" style={{ backgroundColor: 'rgba(0, 121, 107, 0.1)', color: '#00796B', fontFamily: 'monospace', fontSize: '0.82rem', padding: '0.35rem 0.6rem', fontWeight: 700 }}>
-                        <QrCode size={13} style={{ marginRight: '0.3rem', display: 'inline' }} />
-                        {c.code || `CLT-${c.id.slice(0, 4).toUpperCase()}`}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="customer-avatar-cell">
-                        <div className="avatar-circle">
-                          {c.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div className="customer-cell-details">
-                          <span className="customer-cell-name">{c.name}</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      {c.phone ? (
-                        <span className="phone-badge">{c.phone}</span>
-                      ) : (
-                        <span className="text-muted">—</span>
-                      )}
-                    </td>
-                    <td>
-                      <strong className="amount-text">
-                        {c.totalSpent.toLocaleString('fr-FR')} FCFA
-                      </strong>
-                    </td>
-                    <td>
-                      <span className="badge badge-points">
-                        <Award size={12} />
-                        <span>{c.points} pts</span>
-                      </span>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+        <div className="cust-filter-pills">
+          <button
+            type="button"
+            className={`cust-pill ${filterType === 'all' ? 'active' : ''}`}
+            onClick={() => setFilterType('all')}
+          >
+            Tous ({customers.length})
+          </button>
+          <button
+            type="button"
+            className={`cust-pill ${filterType === 'debt' ? 'active' : ''}`}
+            onClick={() => setFilterType('debt')}
+          >
+            Avec Dette ({customers.filter((c) => (c.debtBalance || 0) > 0).length})
+          </button>
+          <button
+            type="button"
+            className={`cust-pill ${filterType === 'points' ? 'active' : ''}`}
+            onClick={() => setFilterType('points')}
+          >
+            Fidélité Active ({customers.filter((c) => c.points > 0).length})
+          </button>
         </div>
       </div>
+
+      {/* ── 4. Main Customers List (Cards for Mobile, Table for Desktop) ─── */}
+      <main className="cust-content-section">
+        {filteredCustomers.length === 0 ? (
+          <div className="cust-empty-box">
+            <Users size={40} color="#94A3B8" />
+            <h3>Aucun client trouvé</h3>
+            <p>Essayez avec un autre terme ou ajoutez un nouveau client fidèle.</p>
+            <button
+              type="button"
+              onClick={() => setShowAddModal(true)}
+              className="cust-empty-add-btn"
+            >
+              + Ajouter un client
+            </button>
+          </div>
+        ) : (
+          <div className="cust-cards-stack">
+            {filteredCustomers.map((c) => {
+              const hasDebt = (c.debtBalance || 0) > 0;
+              const codeDisplay = c.code || `CLT-${c.id.slice(0, 4).toUpperCase()}`;
+
+              return (
+                <div key={c.id} className={`cust-item-card ${hasDebt ? 'has-debt' : ''}`}>
+                  <div className="cust-card-top">
+                    <div className="cust-avatar-circle">
+                      {c.name.charAt(0).toUpperCase()}
+                    </div>
+
+                    <div className="cust-card-identity">
+                      <div className="cust-name-row">
+                        <strong className="cust-name">{c.name}</strong>
+                        <span className="cust-code-pill">{codeDisplay}</span>
+                      </div>
+
+                      {c.phone ? (
+                        <a href={`tel:${c.phone}`} className="cust-phone-link">
+                          <Phone size={13} />
+                          <span>{c.phone}</span>
+                        </a>
+                      ) : (
+                        <span className="cust-no-phone">Pas de téléphone</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Financial Metrics */}
+                  <div className="cust-card-metrics">
+                    <div className="cust-metric-cell">
+                      <span>Total Acheté</span>
+                      <strong>{c.totalSpent.toLocaleString('fr-FR')} F</strong>
+                    </div>
+
+                    <div className="cust-metric-cell">
+                      <span>Fidélité</span>
+                      <strong className="text-amber">
+                        <Award size={13} style={{ display: 'inline', marginRight: '2px' }} />
+                        {c.points} pts
+                      </strong>
+                    </div>
+
+                    <div className="cust-metric-cell">
+                      <span>Dette en cours</span>
+                      <strong className={hasDebt ? 'text-danger' : 'text-success'}>
+                        {hasDebt ? `${c.debtBalance!.toLocaleString('fr-FR')} F` : '0 F'}
+                      </strong>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </main>
+
+      {/* ── 5. Add Customer Modal ─────────────────────────────────────────── */}
+      {showAddModal && (
+        <div
+          className="cust-modal-overlay"
+          onClick={() => setShowAddModal(false)}
+        >
+          <div
+            className="cust-modal-card animate-scale-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="cust-modal-head">
+              <h3>Enregistrer un Nouveau Client</h3>
+              <button
+                type="button"
+                onClick={() => setShowAddModal(false)}
+                className="cust-modal-close"
+              >
+                ×
+              </button>
+            </div>
+
+            <form onSubmit={handleAdd} className="cust-modal-form">
+              <div className="cust-form-group">
+                <label>Nom & Prénom du Client *</label>
+                <input
+                  type="text"
+                  required
+                  autoFocus
+                  placeholder="Ex: Kouamé Jean-Baptiste"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="cust-form-input"
+                />
+              </div>
+
+              <div className="cust-form-group">
+                <label>Numéro de Téléphone (Optionnel)</label>
+                <input
+                  type="tel"
+                  placeholder="Ex: +225 07 00 00 00 00"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="cust-form-input"
+                />
+              </div>
+
+              <div className="cust-form-group">
+                <label>Code Client ou N° Carte Fidélité</label>
+                <input
+                  type="text"
+                  placeholder="Laissez vide pour génération automatique"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  className="cust-form-input"
+                />
+              </div>
+
+              <div className="cust-modal-actions">
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  className="cust-btn-cancel"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading || !name.trim()}
+                  className="cust-btn-submit"
+                >
+                  {loading ? 'Création...' : 'Créer la Fiche Client'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

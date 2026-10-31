@@ -63,16 +63,15 @@ export default function AppUpdateBanner() {
           <Download size={24} />
         </div>
         <h1 id="required-app-update-title" style={{ margin: '0 0 0.65rem', fontSize: '1.35rem' }}>
-          Mise à jour obligatoire
+          Mise à jour Supermarché v{LATEST_APP_VERSION.versionName}
         </h1>
         <p style={{ margin: '0 0 1rem', color: '#475569', lineHeight: 1.55 }}>
-          Cette version de l’application n’est plus prise en charge. Installez la version {LATEST_APP_VERSION.versionName}
-          pour continuer à utiliser ZEYNARMARKET.
+          Cette nouvelle version active la prise en charge de tous les rayons de votre supermarché (Alimentaire, Épicerie, Boissons, Frais, Hygiène, Entretien) avec calcul instantané du prix de gros au détail et des marges.
         </p>
         <ol style={{ margin: '0 0 1.25rem', paddingLeft: '1.35rem', color: '#334155', lineHeight: 1.6 }}>
-          <li>Téléchargez le nouvel APK.</li>
-          <li>Désinstallez l’ancienne application, puis ouvrez le fichier téléchargé pour installer la mise à jour.</li>
-          <li>Vos produits et ventes restent enregistrés sur le serveur.</li>
+          <li>Téléchargez la nouvelle version pour votre terminal ou smartphone.</li>
+          <li>Installez le fichier pour accéder aux nouveaux rayons et fonctionnalités.</li>
+          <li>Tous vos produits, stocks et ventes restent synchronisés en toute sécurité.</li>
         </ol>
         <a
           href={APK_DOWNLOAD_URL}

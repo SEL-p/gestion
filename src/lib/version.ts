@@ -9,12 +9,12 @@ export interface AppVersionInfo {
 
 // Source unique de vérité pour la version de l'application
 export const LATEST_APP_VERSION: AppVersionInfo = {
-  versionName: '1.4',
-  versionCode: 5, // Mise à jour #5 (permission caméra et mise à jour obligatoire)
-  releaseDate: '13/10/2026',
+  versionName: '1.5',
+  versionCode: 6, // Mise à jour #6 : Supermarché Tout-en-Un & Gestion de tous les rayons
+  releaseDate: '24/10/2026',
   releaseNotes:
-    'Mise à jour Android obligatoire, permission caméra corrigée et possibilité de reprendre la photo avec l’appareil photo mobile.',
-  requiresUninstall: true,
+    'Mise à jour Supermarché ZEYNARMARKET : Prise en charge intégrale de tous vos rayons (Alimentaire, Épicerie, Boissons, Frais, Hygiène, Entretien), ajout rapide avec conversion automatique prix gros / détail et suivi des marges en temps réel.',
+  requiresUninstall: false,
   apkDownloadUrl: '/api/download/apk',
 };
 

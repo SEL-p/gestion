@@ -1,13 +1,10 @@
 import { NextResponse } from 'next/server';
-import { createRequire } from 'module';
 import { PassThrough } from 'stream';
 import { prisma } from '@/lib/prisma';
 import fs from 'fs';
 import path from 'path';
 
-const require = createRequire(import.meta.url);
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const archiver = require('archiver');
+import { ZipArchive } from 'archiver';
 
 // Helper for CSV
 function toCSV(data: any[]) {
@@ -26,7 +23,7 @@ function toCSV(data: any[]) {
 }
 
 export async function GET() {
-  const archive = archiver('zip', { zlib: { level: 9 } });
+  const archive = new ZipArchive({ zlib: { level: 9 } });
   const passThrough = new PassThrough();
 
   // Pipe the archive to the PassThrough stream

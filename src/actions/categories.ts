@@ -12,6 +12,9 @@ export async function addCategory(name: string) {
   try {
     await prisma.category.create({ data: { name: name.trim() } });
     revalidatePath('/categories');
+    revalidatePath('/products');
+    revalidatePath('/pos');
+    revalidatePath('/prices');
     return { success: true };
   } catch (e: any) {
     if (e.code === 'P2002') return { success: false, error: 'Cette catégorie existe déjà' };
@@ -23,6 +26,9 @@ export async function deleteCategory(id: string) {
   try {
     await prisma.category.delete({ where: { id } });
     revalidatePath('/categories');
+    revalidatePath('/products');
+    revalidatePath('/pos');
+    revalidatePath('/prices');
     return { success: true };
   } catch (e) {
     return { success: false, error: 'Impossible de supprimer cette catégorie' };

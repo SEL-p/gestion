@@ -8,10 +8,17 @@ export async function updateProductPrice(
   data: { priceHT?: number; priceTTC?: number; purchasePrice?: number }
 ) {
   try {
+    const computedHT =
+      data.priceHT !== undefined
+        ? data.priceHT
+        : data.priceTTC !== undefined
+        ? Math.round(data.priceTTC / 1.18)
+        : undefined;
+
     await prisma.product.update({
       where: { id: productId },
       data: {
-        ...(data.priceHT !== undefined && { priceHT: data.priceHT }),
+        ...(computedHT !== undefined && { priceHT: computedHT }),
         ...(data.priceTTC !== undefined && { priceTTC: data.priceTTC }),
         ...(data.purchasePrice !== undefined && { purchasePrice: data.purchasePrice }),
       },
@@ -19,6 +26,8 @@ export async function updateProductPrice(
 
     revalidatePath('/prices');
     revalidatePath('/products');
+    revalidatePath('/pos');
+    revalidatePath('/');
     return { success: true };
   } catch (err: any) {
     return { success: false, error: err.message };
@@ -35,6 +44,7 @@ export async function bulkUpdatePrices(
           where: { id: u.id },
           data: {
             priceTTC: u.priceTTC,
+            priceHT: Math.round(u.priceTTC / 1.18),
             ...(u.purchasePrice !== undefined && { purchasePrice: u.purchasePrice }),
           },
         })
@@ -43,6 +53,8 @@ export async function bulkUpdatePrices(
 
     revalidatePath('/prices');
     revalidatePath('/products');
+    revalidatePath('/pos');
+    revalidatePath('/');
     return { success: true, count: updates.length };
   } catch (err: any) {
     return { success: false, error: err.message };

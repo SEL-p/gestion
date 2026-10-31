@@ -131,6 +131,8 @@ export async function processCheckout(
 
   revalidatePath('/');
   revalidatePath('/pos');
+  revalidatePath('/products');
+  revalidatePath('/history');
   
   return { success: true, orderId: createdOrder!.id };
 }

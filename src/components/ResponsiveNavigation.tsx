@@ -33,6 +33,13 @@ export default function ResponsiveNavigation({
       .catch(() => {});
   }, [pathname]);
 
+  // Support opening mobile drawer from any view
+  useEffect(() => {
+    const handleOpenDrawer = () => setDrawerOpen(true);
+    window.addEventListener('open-mobile-drawer', handleOpenDrawer);
+    return () => window.removeEventListener('open-mobile-drawer', handleOpenDrawer);
+  }, []);
+
   return (
     <>
       {/* Mobile / Tablet Top Bar */}

@@ -1,16 +1,36 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { processCheckout } from '@/actions/pos';
 import { processBlindReturn } from '@/actions/returns';
 import { logout, loginWithPin } from '@/actions/auth';
-import { useRouter } from 'next/navigation';
-import { Undo, CheckCircle, Lock, LogOut, Sun, Moon, Eye } from 'lucide-react';
-import { useTheme } from '@/components/ThemeProvider';
+import {
+  Search,
+  ShoppingCart,
+  Trash2,
+  Plus,
+  Minus,
+  X,
+  CreditCard,
+  Banknote,
+  RotateCcw,
+  CheckCircle2,
+  AlertCircle,
+  Menu,
+  PauseCircle,
+  PlayCircle,
+  User,
+  ArrowRight,
+  Receipt,
+  Lock,
+} from 'lucide-react';
 import { getProductImageSrc } from '@/lib/product-images';
+import { calculateStockBreakdown } from '@/lib/stock';
 
-type Product = {
+interface Product {
   id: string;
   sku: string;
   name: string;
@@ -18,31 +38,49 @@ type Product = {
   priceHT: number;
   priceTTC: number;
   stock: number;
+  unitsPerCarton?: number;
   images: { url: string }[];
-};
+}
 
-type CartItem = Product & { quantity: number; discountPercent: number };
+interface CartItem extends Product {
+  quantity: number;
+  discountPercent: number;
+}
 
-export default function POSClient({ 
-  products, 
-  customers, 
-  cashierId, 
+interface Customer {
+  id: string;
+  name: string;
+  phone?: string | null;
+  code?: string | null;
+  debtBalance?: number;
+  points?: number;
+}
+
+interface POSClientProps {
+  products: Product[];
+  customers: Customer[];
+  cashierId: string;
+  cashierName: string;
+  initialTodaySales: number;
+}
+
+export default function POSClient({
+  products,
+  customers,
+  cashierId,
   cashierName,
-  initialTodaySales 
-}: { 
-  products: Product[], 
-  customers: any[],
-  cashierId: string,
-  cashierName: string,
-  initialTodaySales: number
-}) {
+  initialTodaySales,
+}: POSClientProps) {
   const router = useRouter();
   const [search, setSearch] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [cart, setCart] = useState<CartItem[]>([]);
   const [globalDiscount, setGlobalDiscount] = useState<number>(0);
-  const { theme, setTheme } = useTheme();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Mobile Drawer & Cart Sheet State
+  const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
 
   // Return Modal State
   const [showReturnModal, setShowReturnModal] = useState(false);
@@ -53,27 +91,58 @@ export default function POSClient({
   const [returnError, setReturnError] = useState('');
   const [returnSuccessMsg, setReturnSuccessMsg] = useState('');
 
-  // Auto-lock state
+  // Auto-lock state (4 minutes inactivity)
   const [isLocked, setIsLocked] = useState(false);
   const [unlockPin, setUnlockPin] = useState('');
   const [unlockError, setUnlockError] = useState('');
 
-  // POS Enhancements
+  // Customer & Hold Cart
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
   const [heldCart, setHeldCart] = useState<CartItem[] | null>(null);
-  
+
   // Checkout Modal State
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [amountReceived, setAmountReceived] = useState<string>('');
-  
-  // Makaya Specifics (Tables & Crédit)
+  const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'MOBILE' | 'CARD' | 'CREDIT'>('CASH');
   const [tableName, setTableName] = useState('');
-  const [paymentStatus, setPaymentStatus] = useState('PAID');
-  const [orderStatus, setOrderStatus] = useState('CLOSED');
-
+  const [paymentStatus, setPaymentStatus] = useState<'PAID' | 'CREDIT'>('PAID');
   const [todaySales, setTodaySales] = useState<number>(initialTodaySales || 0);
 
-  // Auto-lock timer (4 minutes = 240,000 ms)
+  // Success Confirmation Modal
+  const [completedOrder, setCompletedOrder] = useState<{ id: string; total: number; change: number } | null>(null);
+
+  // Categories list extracted from in-stock products
+  const categoriesList = useMemo(() => {
+    const set = new Set<string>();
+    products.forEach((p) => {
+      if (p.category?.trim()) set.add(p.category.trim());
+    });
+    return Array.from(set).sort();
+  }, [products]);
+
+  // Filtered Products
+  const filteredProducts = useMemo(() => {
+    const q = search.toLowerCase().trim();
+    return products.filter((p) => {
+      const matchesSearch =
+        !q ||
+        p.name.toLowerCase().includes(q) ||
+        p.sku.toLowerCase().includes(q) ||
+        p.category.toLowerCase().includes(q);
+
+      if (!matchesSearch) return false;
+
+      if (selectedCategory !== 'ALL') {
+        if (p.category?.trim().toLowerCase() !== selectedCategory.trim().toLowerCase()) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [products, search, selectedCategory]);
+
+  // Auto-lock Inactivity Timer
   useEffect(() => {
     let timeout: NodeJS.Timeout;
 
@@ -100,6 +169,7 @@ export default function POSClient({
     };
   }, [isLocked]);
 
+  // Unlock Handler
   const handleUnlock = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -110,93 +180,111 @@ export default function POSClient({
         setIsLocked(false);
         setUnlockPin('');
       } else {
-        setUnlockError('PIN incorrect');
+        setUnlockError('Code PIN incorrect');
       }
-    } catch (err) {
+    } catch {
       setUnlockError('Erreur de connexion');
     }
     setLoading(false);
   };
 
-  const handleBlindReturn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setReturnError('');
-    setReturnSuccessMsg('');
+  // Cart Operations
+  const addToCart = (product: Product, quantityToAdd: number = 1) => {
+    setCart((prev) => {
+      const existing = prev.find((item) => item.id === product.id);
+      const currentQ = existing ? existing.quantity : 0;
+      let effectiveAdd = quantityToAdd;
 
-    const res = await processBlindReturn(returnSku, returnQty, returnPin, returnReason);
-    if (res.success) {
-      setReturnSuccessMsg(`Retour validé pour ${res.product?.name}. Montant: ${res.product?.amountRef} FCFA.`);
-      setTodaySales(prev => prev - (res.product?.amountRef || 0));
-      setReturnSku('');
-      setReturnQty(1);
-      setReturnPin('');
-    } else {
-      setReturnError(res.error || 'Erreur inconnue.');
-    }
-    setLoading(false);
-  };
-
-  // Filter products based on search
-  const filteredProducts = products.filter(p => 
-    p.name.toLowerCase().includes(search.toLowerCase()) || 
-    p.sku.toLowerCase().includes(search.toLowerCase())
-  );
-
-  const addToCart = (product: Product) => {
-    setCart(prev => {
-      const existing = prev.find(item => item.id === product.id);
-      if (existing) {
-        if (existing.quantity >= product.stock) return prev; // Cannot exceed stock
-        return prev.map(item => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item);
+      if (currentQ + effectiveAdd > product.stock) {
+        effectiveAdd = Math.max(0, product.stock - currentQ);
       }
-      return [...prev, { ...product, quantity: 1, discountPercent: 0 }];
+      if (effectiveAdd <= 0) return prev;
+
+      if (existing) {
+        return prev.map((item) =>
+          item.id === product.id ? { ...item, quantity: item.quantity + effectiveAdd } : item
+        );
+      }
+      return [...prev, { ...product, quantity: effectiveAdd, discountPercent: 0 }];
     });
   };
 
   const updateQuantity = (productId: string, delta: number) => {
-    setCart(prev => prev.map(item => {
-      if (item.id === productId) {
-        const newQ = item.quantity + delta;
-        if (newQ > item.stock) return item;
-        if (newQ < 1) return item;
-        return { ...item, quantity: newQ };
-      }
-      return item;
-    }));
+    setCart((prev) =>
+      prev
+        .map((item) => {
+          if (item.id === productId) {
+            const newQ = item.quantity + delta;
+            if (newQ > item.stock) return item;
+            if (newQ <= 0) return null;
+            return { ...item, quantity: newQ };
+          }
+          return item;
+        })
+        .filter(Boolean) as CartItem[]
+    );
+  };
+
+  const setExactQuantity = (productId: string, qty: number) => {
+    setCart((prev) =>
+      prev
+        .map((item) => {
+          if (item.id === productId) {
+            const safeQ = Math.max(0, Math.min(item.stock, qty));
+            if (safeQ <= 0) return null;
+            return { ...item, quantity: safeQ };
+          }
+          return item;
+        })
+        .filter(Boolean) as CartItem[]
+    );
   };
 
   const updateItemDiscount = (productId: string, discount: number) => {
-    setCart(prev => prev.map(item => {
-      if (item.id === productId) {
-        return { ...item, discountPercent: Math.max(0, Math.min(100, discount)) };
-      }
-      return item;
-    }));
+    setCart((prev) =>
+      prev.map((item) => {
+        if (item.id === productId) {
+          return { ...item, discountPercent: Math.max(0, Math.min(100, discount)) };
+        }
+        return item;
+      })
+    );
   };
 
   const removeFromCart = (productId: string) => {
-    setCart(prev => prev.filter(item => item.id !== productId));
+    setCart((prev) => prev.filter((item) => item.id !== productId));
   };
 
-  const calculateTotals = () => {
+  const clearCart = () => {
+    setCart([]);
+    setGlobalDiscount(0);
+  };
+
+  // Cart Totals
+  const totals = useMemo(() => {
     let ht = 0;
     let ttc = 0;
-    cart.forEach(item => {
-      const multiplier = 1 - (item.discountPercent / 100);
-      ht += (item.priceHT * item.quantity) * multiplier;
-      ttc += (item.priceTTC * item.quantity) * multiplier;
+    let totalPieces = 0;
+
+    cart.forEach((item) => {
+      const multiplier = 1 - (item.discountPercent || 0) / 100;
+      ht += item.priceHT * item.quantity * multiplier;
+      ttc += item.priceTTC * item.quantity * multiplier;
+      totalPieces += item.quantity;
     });
 
-    const globalMultiplier = 1 - ((globalDiscount || 0) / 100);
+    const globalMultiplier = 1 - (globalDiscount || 0) / 100;
+    const finalHT = Math.round(ht * globalMultiplier);
+    const finalTTC = Math.round(ttc * globalMultiplier);
+
     return {
-      totalHT: ht * globalMultiplier,
-      totalTTC: ttc * globalMultiplier
+      totalHT: finalHT,
+      totalTTC: finalTTC,
+      totalPieces,
     };
-  };
+  }, [cart, globalDiscount]);
 
-  const { totalHT, totalTTC } = calculateTotals();
-
+  // Hold / Resume Cart
   const toggleHoldCart = () => {
     if (cart.length > 0) {
       setHeldCart(cart);
@@ -207,446 +295,954 @@ export default function POSClient({
     }
   };
 
-  const handleCheckout = async () => {
+  // Open Checkout
+  const openCheckout = () => {
     if (cart.length === 0) return;
+    setAmountReceived(String(totals.totalTTC));
+    setPaymentStatus('PAID');
+    setShowCheckoutModal(true);
+  };
+
+  // Checkout Submission
+  const handleCheckoutSubmit = async () => {
+    if (cart.length === 0) return;
+
+    if (paymentStatus === 'CREDIT' && !selectedCustomerId) {
+      setError('Veuillez sélectionner un client pour une vente à crédit.');
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
+    const receivedNum = parseFloat(amountReceived) || 0;
+    const changeToReturn = Math.max(0, receivedNum - totals.totalTTC);
+
     try {
-      const payload = cart.map(i => ({ 
-        productId: i.id, 
-        quantity: i.quantity, 
-        discountPercent: i.discountPercent 
+      const payload = cart.map((i) => ({
+        productId: i.id,
+        quantity: i.quantity,
+        discountPercent: i.discountPercent,
       }));
-      
+
       const res = await processCheckout(
-        payload, 
-        globalDiscount || 0, 
+        payload,
+        globalDiscount || 0,
         selectedCustomerId || undefined,
         {
           tableName: tableName || undefined,
-          status: orderStatus,
-          paymentStatus: paymentStatus,
-          paidAmount: parseFloat(amountReceived) || 0
+          status: 'CLOSED',
+          paymentStatus,
+          paidAmount: paymentStatus === 'PAID' ? totals.totalTTC : 0,
         }
       );
-      
+
       if (res.success && res.orderId) {
         if (paymentStatus === 'PAID') {
-          setTodaySales(prev => prev + totalTTC);
+          setTodaySales((prev) => prev + totals.totalTTC);
         }
+
+        setCompletedOrder({
+          id: res.orderId,
+          total: totals.totalTTC,
+          change: changeToReturn,
+        });
+
+        // Reset Cart
         setCart([]);
         setGlobalDiscount(0);
         setSelectedCustomerId('');
         setAmountReceived('');
         setTableName('');
         setPaymentStatus('PAID');
-        setOrderStatus('CLOSED');
         setShowCheckoutModal(false);
-        // Open invoice in new tab or navigate
-        window.open(`/pos/invoice/${res.orderId}`, '_blank');
+        setIsMobileCartOpen(false);
       }
     } catch (err: any) {
-      setError(err.message || 'Une erreur est survenue lors de l\'encaissement.');
+      setError(err.message || 'Une erreur est survenue lors de l’encaissement.');
     } finally {
       setLoading(false);
     }
   };
 
+  // Blind Return Submission
+  const handleBlindReturn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setReturnError('');
+    setReturnSuccessMsg('');
+
+    const res = await processBlindReturn(returnSku, returnQty, returnPin, returnReason);
+    if (res.success) {
+      setReturnSuccessMsg(
+        `Retour validé pour ${res.product?.name}. Montant remboursé : ${res.product?.amountRef} FCFA.`
+      );
+      setTodaySales((prev) => prev - (res.product?.amountRef || 0));
+      setReturnSku('');
+      setReturnQty(1);
+      setReturnPin('');
+    } else {
+      setReturnError(res.error || 'Erreur lors du traitement du retour.');
+    }
+    setLoading(false);
+  };
+
+  const receivedVal = parseFloat(amountReceived) || 0;
+  const changeAmount = Math.max(0, receivedVal - totals.totalTTC);
+  const isExactOrMore = receivedVal >= totals.totalTTC;
+
+  // Open Drawer trigger for Mobile
+  const handleOpenDrawer = () => {
+    window.dispatchEvent(new CustomEvent('open-mobile-drawer'));
+  };
+
   return (
-    <div className="pos-layout">
-      
-      {/* LEFT PANE: Products */}
-      <div className="glass-panel" style={{ flex: 2, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <div style={{ padding: '1rem', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
-          <input 
-            type="text" 
-            placeholder="Rechercher un produit (Nom, SKU)..." 
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="form-control"
-            style={{ flex: '1 1 200px' }}
-          />
-          <div style={{ marginRight: 'auto', display: 'flex', alignItems: 'center', gap: '1rem', backgroundColor: 'rgba(16, 185, 129, 0.1)', padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
-            <span style={{ color: 'var(--slate-600)', fontSize: '0.9rem' }}>Ventes du jour ({cashierName}) :</span>
-            <span style={{ color: 'var(--success-color)', fontWeight: 'bold', fontSize: '1.1rem' }}>{todaySales.toFixed(0)} FCFA</span>
+    <div className="pos-redesign-container">
+      {/* ── 1. Top POS Header (Forest Teal #004D40) ───────────────────────── */}
+      <header className="pos-top-header">
+        <div className="pos-header-left">
+          <button
+            type="button"
+            onClick={handleOpenDrawer}
+            className="pos-header-btn"
+            aria-label="Menu"
+            title="Menu principal"
+          >
+            <Menu size={22} color="#FFFFFF" />
+          </button>
+
+          <div className="pos-title-block">
+            <h1 className="pos-main-title">Caisse Supermarché</h1>
+            <span className="pos-cashier-sub">Caissier : {cashierName}</span>
+          </div>
+        </div>
+
+        <div className="pos-header-right">
+          {/* Today's Sales Counter */}
+          <div className="pos-sales-pill">
+            <span className="pos-sales-label">Aujourd&apos;hui</span>
+            <strong className="pos-sales-amount">
+              {todaySales.toLocaleString('fr-FR')} F
+            </strong>
           </div>
 
-          <button onClick={() => setShowReturnModal(true)} className="btn btn-outline" style={{ color: 'var(--danger-color)', borderColor: 'var(--danger-color)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Undo size={16} /> Remboursement
-          </button>
-          
-          <button 
-            onClick={() => {
-              if (theme === 'light') setTheme('dark');
-              else if (theme === 'dark') setTheme('high-contrast');
-              else setTheme('light');
-            }} 
-            className="btn btn-outline" 
-            style={{ color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-            title="Changer le thème visuel"
+          {/* Refund Trigger */}
+          <button
+            type="button"
+            onClick={() => setShowReturnModal(true)}
+            className="pos-header-btn-refund"
+            title="Remboursement / Retour article"
           >
-            {theme === 'light' && <Sun size={16} />}
-            {theme === 'dark' && <Moon size={16} />}
-            {theme === 'high-contrast' && <Eye size={16} />}
-            Thème
-          </button>
-
-          <button onClick={() => logout()} className="btn btn-outline" style={{ color: 'var(--slate-600)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <LogOut size={16} /> Déconnexion
+            <RotateCcw size={16} />
+            <span className="pos-btn-text">Retour</span>
           </button>
         </div>
-        
-        <div style={{ padding: '1rem', overflowY: 'auto', flex: 1, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '1rem', alignContent: 'start' }}>
-          {filteredProducts.map(product => (
-            <div 
-              key={product.id} 
-              className="glass-panel" 
-              style={{ cursor: 'pointer', padding: '0.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', transition: 'transform 0.1s' }}
-              onClick={() => addToCart(product)}
-              onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
-              onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+      </header>
+
+      {/* ── 2. Search & Category Filters Bar ───────────────────────────────── */}
+      <div className="pos-toolbar-strip">
+        {/* Search Input */}
+        <div className="pos-search-box">
+          <Search size={18} className="pos-search-icon" />
+          <input
+            type="text"
+            placeholder="Rechercher par nom, SKU ou code-barres..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pos-search-input"
+          />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch('')}
+              className="pos-search-clear"
+              aria-label="Effacer"
             >
-              <div style={{ width: '100px', height: '100px', position: 'relative', marginBottom: '0.5rem', borderRadius: '8px', overflow: 'hidden', backgroundColor: 'rgba(255,255,255,0.05)' }}>
-                {product.images.length > 0 ? (
-                  <Image src={getProductImageSrc(product.images[0].url)} alt={product.name} fill style={{ objectFit: 'cover' }} sizes="100px" />
-                ) : (
-                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.3)' }}>
-                    Pas d'image
-                  </div>
-                )}
-              </div>
-              <div style={{ fontWeight: 'bold', textAlign: 'center', fontSize: '0.9rem' }}>{product.name}</div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>{product.sku}</div>
-              <div style={{ color: 'var(--slate-900)', fontWeight: 'bold', fontSize: '1.1rem', backgroundColor: 'var(--slate-100)', padding: '0.2rem 0.5rem', borderRadius: '6px', marginTop: '0.2rem', border: '1px solid var(--slate-200)' }}>
-                {product.priceTTC.toFixed(0)} FCFA
-              </div>
-              <div style={{ fontSize: '0.75rem', color: product.stock > 5 ? 'var(--success-color)' : 'var(--warning-color)' }}>
-                Stock: {product.stock}
-              </div>
-            </div>
-          ))}
-          {filteredProducts.length === 0 && (
-            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
-              Aucun produit trouvé en stock.
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* RIGHT PANE: Cart */}
-      <div className="glass-panel" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <div style={{ padding: '1rem', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2 style={{ margin: 0 }}>Panier ({cart.length})</h2>
-          {(cart.length > 0 || heldCart) && (
-            <button onClick={toggleHoldCart} className="btn btn-outline" style={{ fontSize: '0.8rem', padding: '0.3rem 0.6rem' }}>
-              {cart.length > 0 ? '⏸️ Mettre en attente' : '▶️ Reprendre panier'}
+              ×
             </button>
           )}
         </div>
-        
-        <div style={{ flex: 1, overflowY: 'auto', padding: '1rem' }}>
-          {cart.length === 0 ? (
-            <div style={{ color: 'var(--text-secondary)', textAlign: 'center', marginTop: '2rem' }}>
-              Le panier est vide
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {cart.map(item => (
-                <div key={item.id} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', padding: '0.5rem', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}>
-                  
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 'bold' }}>{item.name}</div>
-                      <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                        {item.priceTTC.toFixed(0)} FCFA /u
-                      </div>
-                    </div>
-                    
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <button onClick={() => updateQuantity(item.id, -1)} style={{ width: '28px', height: '28px', borderRadius: '50%', border: 'none', backgroundColor: 'rgba(255,255,255,0.1)', color: 'white', cursor: 'pointer' }}>-</button>
-                      <span style={{ width: '20px', textAlign: 'center' }}>{item.quantity}</span>
-                      <button onClick={() => updateQuantity(item.id, 1)} style={{ width: '28px', height: '28px', borderRadius: '50%', border: 'none', backgroundColor: 'rgba(255,255,255,0.1)', color: 'white', cursor: 'pointer' }}>+</button>
-                      <button onClick={() => removeFromCart(item.id)} style={{ marginLeft: '0.5rem', border: 'none', background: 'transparent', color: 'var(--danger-color)', cursor: 'pointer', fontSize: '1.2rem' }}>&times;</button>
-                    </div>
-                  </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
-                    <span style={{ color: 'var(--text-secondary)' }}>Remise unitaire:</span>
-                    <input 
-                      type="number" 
-                      min="0" max="100" 
-                      value={item.discountPercent || ''} 
-                      onChange={e => updateItemDiscount(item.id, parseInt(e.target.value) || 0)}
-                      className="form-control"
-                      style={{ width: '60px', padding: '0.2rem', fontSize: '0.85rem' }}
-                      placeholder="%"
-                    />
-                    <span>%</span>
-                  </div>
-
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div style={{ padding: '1.5rem', backgroundColor: 'rgba(0,0,0,0.2)', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '1rem' }}>
-            <span style={{ fontWeight: 'bold' }}>Remise Globale (%) :</span>
-            <input 
-              type="number" 
-              min="0" max="100" 
-              value={globalDiscount || ''} 
-              onChange={e => setGlobalDiscount(parseInt(e.target.value) || 0)}
-              className="form-control"
-              style={{ width: '80px', textAlign: 'right' }}
-              placeholder="%"
-            />
-          </div>
-
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
-            <span>Total HT:</span>
-            <span>{totalHT.toFixed(0)} FCFA</span>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem', fontSize: '1.2rem', fontWeight: 'bold' }}>
-            <span>Total TTC:</span>
-            <span style={{ color: 'var(--accent-color)' }}>{totalTTC.toFixed(0)} FCFA</span>
-          </div>
-
-          <button 
-            className="btn btn-primary" 
-            style={{ width: '100%', fontSize: '1.1rem', padding: '1rem' }}
-            disabled={cart.length === 0}
-            onClick={() => setShowCheckoutModal(true)}
+        {/* Categories Strip */}
+        <div className="pos-category-pills">
+          <button
+            type="button"
+            className={`pos-cat-pill ${selectedCategory === 'ALL' ? 'active' : ''}`}
+            onClick={() => setSelectedCategory('ALL')}
           >
-            Passer à l'encaissement
+            Tous ({products.length})
           </button>
+          {categoriesList.map((cat) => {
+            const count = products.filter((p) => p.category === cat).length;
+            return (
+              <button
+                key={cat}
+                type="button"
+                className={`pos-cat-pill ${selectedCategory === cat ? 'active' : ''}`}
+                onClick={() => setSelectedCategory(cat)}
+              >
+                {cat} ({count})
+              </button>
+            );
+          })}
         </div>
       </div>
-      
-      {/* Checkout Modal */}
+
+      {/* ── 3. Main Workspace: Products Grid + Desktop Cart Sidebar ────────── */}
+      <div className="pos-main-workspace">
+        {/* Product Catalog Grid */}
+        <section className="pos-products-section" aria-label="Articles en stock">
+          {filteredProducts.length === 0 ? (
+            <div className="pos-empty-catalog">
+              <div className="pos-empty-icon">📦</div>
+              <h3>Aucun article trouvé</h3>
+              <p>Essayez avec un autre nom ou modifiez votre sélection de rayon.</p>
+              <button
+                type="button"
+                onClick={() => {
+                  setSearch('');
+                  setSelectedCategory('ALL');
+                }}
+                className="pos-empty-reset"
+              >
+                Réinitialiser la recherche
+              </button>
+            </div>
+          ) : (
+            <div className="pos-products-grid">
+              {filteredProducts.map((p) => {
+                const stockInfo = calculateStockBreakdown(p.stock, p.unitsPerCarton);
+                const isPack = stockInfo.isPack;
+                const unitsInPack = stockInfo.unitsPerPack;
+                const inCart = cart.find((item) => item.id === p.id);
+                const cartQty = inCart ? inCart.quantity : 0;
+                const isMaxStock = cartQty >= p.stock;
+
+                return (
+                  <div
+                    key={p.id}
+                    className={`pos-product-card ${cartQty > 0 ? 'is-in-cart' : ''}`}
+                    onClick={() => !isMaxStock && addToCart(p, 1)}
+                  >
+                    {/* Top: Thumbnail & Stock Breakdown */}
+                    <div className="pos-prod-top">
+                      <div className="pos-prod-thumb">
+                        {p.images && p.images.length > 0 ? (
+                          <Image
+                            src={getProductImageSrc(p.images[0].url)}
+                            alt={p.name}
+                            fill
+                            sizes="70px"
+                            className="pos-prod-img"
+                          />
+                        ) : (
+                          <div className="pos-prod-placeholder">
+                            <span>{p.name.charAt(0).toUpperCase()}</span>
+                          </div>
+                        )}
+                        {cartQty > 0 && (
+                          <span className="pos-cart-badge">{cartQty}</span>
+                        )}
+                      </div>
+
+                      <div className="pos-prod-badges">
+                        <span className="pos-stock-badge" title={stockInfo.detailedText}>
+                          {stockInfo.badgeText}
+                        </span>
+                        {isPack && (
+                          <span className="pos-pack-badge">Casier {unitsInPack}</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Content */}
+                    <div className="pos-prod-info">
+                      <h3 className="pos-prod-name" title={p.name}>
+                        {p.name}
+                      </h3>
+                      <span className="pos-prod-sku">SKU: {p.sku}</span>
+                      <strong className="pos-prod-price">
+                        {p.priceTTC.toLocaleString('fr-FR')} FCFA
+                      </strong>
+                    </div>
+
+                    {/* Dual Action Buttons */}
+                    <div
+                      className="pos-prod-actions"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <button
+                        type="button"
+                        disabled={isMaxStock}
+                        onClick={() => addToCart(p, 1)}
+                        className="pos-btn-add-unit"
+                        title="Ajouter 1 pièce"
+                      >
+                        <Plus size={14} /> 1 pc
+                      </button>
+
+                      {isPack && (
+                        <button
+                          type="button"
+                          disabled={cartQty + unitsInPack > p.stock}
+                          onClick={() => addToCart(p, unitsInPack)}
+                          className="pos-btn-add-pack"
+                          title={`Ajouter 1 casier complet (${unitsInPack} pcs)`}
+                        >
+                          <Plus size={14} /> 1 Pack ({unitsInPack})
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        {/* ── Desktop Persistent Cart Pane ─────────────────────────────────── */}
+        <aside className="pos-desktop-cart-pane">
+          <div className="pos-cart-header">
+            <div className="pos-cart-title-row">
+              <ShoppingCart size={20} color="#004D40" />
+              <h2>Panier en cours</h2>
+              <span className="pos-cart-count-pill">{cart.length}</span>
+            </div>
+
+            {(cart.length > 0 || heldCart) && (
+              <button
+                type="button"
+                onClick={toggleHoldCart}
+                className="pos-cart-hold-btn"
+                title={cart.length > 0 ? 'Mettre en attente' : 'Reprendre le panier'}
+              >
+                {cart.length > 0 ? (
+                  <>
+                    <PauseCircle size={15} /> Attente
+                  </>
+                ) : (
+                  <>
+                    <PlayCircle size={15} /> Reprendre
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+
+          {/* Cart Items List */}
+          <div className="pos-cart-items-scroll">
+            {cart.length === 0 ? (
+              <div className="pos-cart-empty">
+                <ShoppingCart size={40} strokeWidth={1.5} color="#CBD5E1" />
+                <p>Le panier est vide.</p>
+                <span>Touchez un article à gauche pour l&apos;ajouter à la vente.</span>
+              </div>
+            ) : (
+              <div className="pos-cart-items-list">
+                {cart.map((item) => {
+                  const itemSubtotal = Math.round(
+                    item.priceTTC * item.quantity * (1 - (item.discountPercent || 0) / 100)
+                  );
+                  const isPackItem = item.unitsPerCarton && item.unitsPerCarton > 1;
+
+                  return (
+                    <div key={item.id} className="pos-cart-item-row">
+                      <div className="pos-cart-item-left">
+                        <strong className="pos-cart-item-name">{item.name}</strong>
+                        <div className="pos-cart-item-meta">
+                          <span>{item.priceTTC.toLocaleString('fr-FR')} F / pc</span>
+                          {isPackItem && (
+                            <span className="pos-cart-pack-hint">
+                              = {Math.floor(item.quantity / item.unitsPerCarton!)} pack(s) +{' '}
+                              {item.quantity % item.unitsPerCarton!} pc(s)
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Stepper */}
+                      <div className="pos-cart-item-actions">
+                        <div className="pos-stepper">
+                          <button
+                            type="button"
+                            onClick={() => updateQuantity(item.id, -1)}
+                            className="pos-stepper-btn"
+                          >
+                            <Minus size={13} />
+                          </button>
+                          <span className="pos-stepper-val">{item.quantity}</span>
+                          <button
+                            type="button"
+                            disabled={item.quantity >= item.stock}
+                            onClick={() => updateQuantity(item.id, 1)}
+                            className="pos-stepper-btn"
+                          >
+                            <Plus size={13} />
+                          </button>
+                        </div>
+
+                        <strong className="pos-cart-item-total">
+                          {itemSubtotal.toLocaleString('fr-FR')} F
+                        </strong>
+
+                        <button
+                          type="button"
+                          onClick={() => removeFromCart(item.id)}
+                          className="pos-cart-remove-btn"
+                          title="Supprimer"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Cart Footer */}
+          {cart.length > 0 && (
+            <div className="pos-cart-footer">
+              {/* Customer Selector & Discounts */}
+              <div className="pos-cart-options">
+                <div className="pos-customer-select-wrap">
+                  <User size={15} color="#64748B" />
+                  <select
+                    value={selectedCustomerId}
+                    onChange={(e) => setSelectedCustomerId(e.target.value)}
+                    className="pos-customer-select"
+                  >
+                    <option value="">Client standard (Comptant)</option>
+                    {customers.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name} {c.phone ? `(${c.phone})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="pos-discount-field">
+                  <span>Remise (%) :</span>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    placeholder="0"
+                    value={globalDiscount || ''}
+                    onChange={(e) => setGlobalDiscount(parseInt(e.target.value, 10) || 0)}
+                    className="pos-discount-input"
+                  />
+                </div>
+              </div>
+
+              {/* Total Calculation */}
+              <div className="pos-cart-totals">
+                <div className="pos-total-row">
+                  <span>Total HT</span>
+                  <span>{totals.totalHT.toLocaleString('fr-FR')} FCFA</span>
+                </div>
+                <div className="pos-total-row is-grand-total">
+                  <span>Total TTC ({totals.totalPieces} pcs)</span>
+                  <strong>{totals.totalTTC.toLocaleString('fr-FR')} FCFA</strong>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pos-cart-submit-btns">
+                <button
+                  type="button"
+                  onClick={clearCart}
+                  className="pos-cart-clear-btn"
+                >
+                  Vider
+                </button>
+                <button
+                  type="button"
+                  onClick={openCheckout}
+                  className="pos-cart-pay-btn"
+                >
+                  <span>Encaisser</span>
+                  <ArrowRight size={18} />
+                </button>
+              </div>
+            </div>
+          )}
+        </aside>
+      </div>
+
+      {/* ── 4. Mobile Sticky Bottom Cart Trigger Bar ──────────────────────── */}
+      {cart.length > 0 && (
+        <div className="pos-mobile-floating-cart-bar">
+          <div
+            className="pos-floating-bar-info"
+            onClick={() => setIsMobileCartOpen(true)}
+          >
+            <span className="pos-floating-badge">{totals.totalPieces}</span>
+            <div className="pos-floating-amounts">
+              <strong>{totals.totalTTC.toLocaleString('fr-FR')} FCFA</strong>
+              <span>{cart.length} référence(s)</span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={openCheckout}
+            className="pos-floating-pay-btn"
+          >
+            Payer
+          </button>
+        </div>
+      )}
+
+      {/* ── 5. Mobile Slide-Up Cart Drawer ─────────────────────────────────── */}
+      {isMobileCartOpen && (
+        <div
+          className="pos-sheet-backdrop"
+          onClick={() => setIsMobileCartOpen(false)}
+        >
+          <div
+            className="pos-sheet-drawer animate-slide-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="pos-sheet-header">
+              <div className="pos-sheet-title">
+                <ShoppingCart size={20} color="#004D40" />
+                <h3>Panier ({cart.length})</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsMobileCartOpen(false)}
+                className="pos-sheet-close"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="pos-sheet-body">
+              {cart.map((item) => {
+                const subtotal = Math.round(
+                  item.priceTTC * item.quantity * (1 - (item.discountPercent || 0) / 100)
+                );
+                return (
+                  <div key={item.id} className="pos-sheet-item">
+                    <div className="pos-sheet-item-info">
+                      <strong>{item.name}</strong>
+                      <span>{item.priceTTC.toLocaleString('fr-FR')} F / pc</span>
+                    </div>
+
+                    <div className="pos-sheet-stepper">
+                      <button
+                        type="button"
+                        onClick={() => updateQuantity(item.id, -1)}
+                        className="pos-stepper-btn"
+                      >
+                        <Minus size={14} />
+                      </button>
+                      <span className="pos-stepper-val">{item.quantity}</span>
+                      <button
+                        type="button"
+                        disabled={item.quantity >= item.stock}
+                        onClick={() => updateQuantity(item.id, 1)}
+                        className="pos-stepper-btn"
+                      >
+                        <Plus size={14} />
+                      </button>
+                    </div>
+
+                    <strong className="pos-sheet-total">
+                      {subtotal.toLocaleString('fr-FR')} F
+                    </strong>
+
+                    <button
+                      type="button"
+                      onClick={() => removeFromCart(item.id)}
+                      className="pos-sheet-del"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="pos-sheet-footer">
+              <div className="pos-sheet-totals">
+                <span>Total à régler ({totals.totalPieces} pcs) :</span>
+                <strong>{totals.totalTTC.toLocaleString('fr-FR')} FCFA</strong>
+              </div>
+
+              <div className="pos-sheet-actions">
+                <button
+                  type="button"
+                  onClick={() => setIsMobileCartOpen(false)}
+                  className="pos-sheet-back-btn"
+                >
+                  Continuer
+                </button>
+                <button
+                  type="button"
+                  onClick={openCheckout}
+                  className="pos-sheet-checkout-btn"
+                >
+                  Passer au paiement
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 6. Checkout Payment Modal with Fast Money Buttons ──────────────── */}
       {showCheckoutModal && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
-          backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000,
-          display: 'flex', alignItems: 'center', justifyContent: 'center'
-        }}>
-          <div className="glass-card" style={{ padding: '2rem', width: '450px', maxWidth: '90%', backgroundColor: 'white' }}>
-            <h3 style={{ marginBottom: '1.5rem' }}>Encaissement</h3>
-            
-            <div style={{ textAlign: 'center', marginBottom: '2rem', padding: '1.5rem', backgroundColor: 'var(--slate-50)', borderRadius: '12px' }}>
-              <div style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Montant à payer</div>
-              <div style={{ fontSize: '2.5rem', fontWeight: '900', color: 'var(--accent-color)', lineHeight: 1 }}>{totalTTC.toFixed(0)} FCFA</div>
+        <div
+          className="pos-modal-overlay"
+          onClick={() => setShowCheckoutModal(false)}
+        >
+          <div
+            className="pos-checkout-modal animate-scale-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="pos-modal-header">
+              <h3>Encaissement & Paiement</h3>
+              <button
+                type="button"
+                onClick={() => setShowCheckoutModal(false)}
+                className="pos-modal-close"
+              >
+                ×
+              </button>
             </div>
 
-            <div className="form-group">
-              <label className="form-label">Associer à un client (Optionnel)</label>
-              <select className="form-control" value={selectedCustomerId} onChange={e => setSelectedCustomerId(e.target.value)}>
-                <option value="">-- Client Anonyme --</option>
-                {customers.map(c => (
-                  <option key={c.id} value={c.id}>
-                    {c.code ? `[${c.code}] ` : ''}{c.name} ({c.phone || 'Sans tel'})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="grid grid-cols-2">
-              <div className="form-group">
-                <label className="form-label">Table (Optionnel)</label>
-                <input 
-                  type="text" 
-                  className="form-control" 
-                  value={tableName} 
-                  onChange={e => setTableName(e.target.value)} 
-                  placeholder="Ex: Table 4, VIP"
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Statut Table</label>
-                <select className="form-control" value={orderStatus} onChange={e => setOrderStatus(e.target.value)}>
-                  <option value="CLOSED">Clôturée</option>
-                  <option value="OPEN">En Cours (Reste ouverte)</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Type de Paiement</label>
-              <select className="form-control" value={paymentStatus} onChange={e => setPaymentStatus(e.target.value)}>
-                <option value="PAID">Payé Comptant</option>
-                <option value="PARTIAL">Acompte (Partiel)</option>
-                <option value="CREDIT">Crédit (Ardoise complète)</option>
-              </select>
-            </div>
-
-            {paymentStatus !== 'CREDIT' && (
-              <div className="form-group" style={{ marginBottom: '2rem' }}>
-                <label className="form-label">Espèces reçues {paymentStatus === 'PARTIAL' ? '(Acompte)' : '(Calculateur)'}</label>
-                <input 
-                  type="number" 
-                  className="form-control" 
-                  value={amountReceived} 
-                  onChange={e => setAmountReceived(e.target.value)} 
-                  placeholder={paymentStatus === 'PARTIAL' ? "Montant de l'acompte" : "Ex: 10000"}
-                  style={{ fontSize: '1.5rem', fontWeight: 'bold' }}
-                />
-                {paymentStatus === 'PAID' && parseFloat(amountReceived) >= totalTTC && (
-                  <div style={{ marginTop: '0.5rem', fontSize: '1.1rem', color: 'var(--success-color)', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', padding: '0.5rem', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderRadius: '6px' }}>
-                    <span>Monnaie à rendre :</span>
-                    <span>{(parseFloat(amountReceived) - totalTTC).toFixed(0)} FCFA</span>
-                  </div>
-                )}
-                {paymentStatus === 'PARTIAL' && parseFloat(amountReceived) < totalTTC && parseFloat(amountReceived) > 0 && (
-                  <div style={{ marginTop: '0.5rem', fontSize: '0.9rem', color: 'var(--warning-color)' }}>
-                    Reste à payer (Dette) : {(totalTTC - parseFloat(amountReceived)).toFixed(0)} FCFA
-                  </div>
-                )}
+            {error && (
+              <div className="pos-alert-error">
+                <AlertCircle size={16} />
+                <span>{error}</span>
               </div>
             )}
 
-            {error && <div style={{ color: 'var(--danger-color)', marginBottom: '1rem', fontSize: '0.9rem' }}>{error}</div>}
+            {/* Total Grand Display */}
+            <div className="pos-checkout-grand-box">
+              <span className="pos-grand-label">Montant Total à Payer</span>
+              <strong className="pos-grand-val">
+                {totals.totalTTC.toLocaleString('fr-FR')}{' '}
+                <span className="pos-currency">FCFA</span>
+              </strong>
+            </div>
 
-            <div style={{ display: 'flex', gap: '1rem' }}>
-              <button onClick={() => setShowCheckoutModal(false)} className="btn btn-outline" style={{ flex: 1 }} disabled={loading}>Annuler</button>
-              <button onClick={handleCheckout} className="btn btn-primary" style={{ flex: 2, fontSize: '1.1rem' }} disabled={loading}>
+            {/* Payment Method Selector */}
+            <div className="pos-payment-methods">
+              <button
+                type="button"
+                className={`pos-pay-method-btn ${paymentStatus === 'PAID' && paymentMethod === 'CASH' ? 'active' : ''}`}
+                onClick={() => {
+                  setPaymentStatus('PAID');
+                  setPaymentMethod('CASH');
+                }}
+              >
+                <Banknote size={18} />
+                <span>Espèces</span>
+              </button>
+
+              <button
+                type="button"
+                className={`pos-pay-method-btn ${paymentStatus === 'PAID' && paymentMethod === 'MOBILE' ? 'active' : ''}`}
+                onClick={() => {
+                  setPaymentStatus('PAID');
+                  setPaymentMethod('MOBILE');
+                }}
+              >
+                <CreditCard size={18} />
+                <span>Mobile Money</span>
+              </button>
+
+              <button
+                type="button"
+                className={`pos-pay-method-btn ${paymentStatus === 'CREDIT' ? 'active is-credit' : ''}`}
+                onClick={() => setPaymentStatus('CREDIT')}
+              >
+                <User size={18} />
+                <span>Vente à Crédit</span>
+              </button>
+            </div>
+
+            {/* Cash Input & Quick Money Keypad */}
+            {paymentStatus === 'PAID' && (
+              <div className="pos-cash-calculator">
+                <label className="pos-calc-label">Montant Reçu du Client</label>
+                <div className="pos-cash-input-wrap">
+                  <input
+                    type="number"
+                    min="0"
+                    step="100"
+                    placeholder="Montant reçu"
+                    value={amountReceived}
+                    onChange={(e) => setAmountReceived(e.target.value)}
+                    className="pos-cash-field"
+                  />
+                  <span className="pos-cash-curr">FCFA</span>
+                </div>
+
+                {/* Quick denomination pills */}
+                <div className="pos-money-pills">
+                  <button
+                    type="button"
+                    onClick={() => setAmountReceived(String(totals.totalTTC))}
+                    className="pos-pill-money"
+                  >
+                    Exact
+                  </button>
+                  {[1000, 2000, 5000, 10000, 20000].map((val) => (
+                    <button
+                      key={val}
+                      type="button"
+                      onClick={() => setAmountReceived(String(val))}
+                      className="pos-pill-money"
+                    >
+                      {val.toLocaleString('fr-FR')} F
+                    </button>
+                  ))}
+                </div>
+
+                {/* Change Calculation Display */}
+                <div
+                  className={`pos-change-box ${isExactOrMore ? 'is-good' : 'is-short'}`}
+                >
+                  <span className="pos-change-label">
+                    {isExactOrMore ? 'Monnaie à rendre :' : 'Reste dû :'}
+                  </span>
+                  <strong className="pos-change-val">
+                    {isExactOrMore
+                      ? `+${changeAmount.toLocaleString('fr-FR')} FCFA`
+                      : `-${Math.abs(totals.totalTTC - receivedVal).toLocaleString('fr-FR')} FCFA`}
+                  </strong>
+                </div>
+              </div>
+            )}
+
+            {paymentStatus === 'CREDIT' && (
+              <div className="pos-credit-box">
+                <p>
+                  Sélectionnez le client pour enregistrer cette dette sur son compte :
+                </p>
+                <select
+                  required
+                  value={selectedCustomerId}
+                  onChange={(e) => setSelectedCustomerId(e.target.value)}
+                  className="pos-customer-select-modal"
+                >
+                  <option value="">Sélectionner un client...</option>
+                  {customers.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} {c.phone ? `(${c.phone})` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Modal Actions */}
+            <div className="pos-modal-actions">
+              <button
+                type="button"
+                onClick={() => setShowCheckoutModal(false)}
+                className="pos-modal-cancel"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                disabled={loading || (paymentStatus === 'PAID' && !isExactOrMore)}
+                onClick={handleCheckoutSubmit}
+                className="pos-modal-submit"
+              >
                 {loading ? 'Validation...' : 'Valider & Imprimer'}
               </button>
             </div>
           </div>
         </div>
       )}
-      
-      {/* Return Modal Overlay */}
-      {showReturnModal && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
-          backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000,
-          display: 'flex', alignItems: 'center', justifyContent: 'center'
-        }}>
-          <div className="glass-card" style={{ padding: '2rem', width: '400px', maxWidth: '90%', backgroundColor: 'white' }}>
-            <h3 style={{ marginBottom: '1.5rem', color: 'var(--danger-color)' }}>Remboursement Produit</h3>
 
-            {returnSuccessMsg ? (
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ color: 'var(--success-color)', marginBottom: '1.5rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                  <CheckCircle size={24} /> {returnSuccessMsg}
-                </div>
-                <button type="button" onClick={() => { setShowReturnModal(false); setReturnSuccessMsg(''); }} className="btn btn-outline" style={{ width: '100%' }}>Fermer</button>
+      {/* ── 7. Order Complete Success Confirmation Modal ──────────────────── */}
+      {completedOrder && (
+        <div className="pos-modal-overlay">
+          <div className="pos-success-modal animate-scale-up">
+            <div className="pos-success-icon-wrap">
+              <CheckCircle2 size={48} color="#059669" />
+            </div>
+
+            <h2>Vente Enregistrée !</h2>
+            <p>
+              La transaction de{' '}
+              <strong>{completedOrder.total.toLocaleString('fr-FR')} FCFA</strong> a
+              été validée avec succès.
+            </p>
+
+            {completedOrder.change > 0 && (
+              <div className="pos-success-change-card">
+                <span>Monnaie remise au client</span>
+                <strong>+{completedOrder.change.toLocaleString('fr-FR')} FCFA</strong>
               </div>
-            ) : (
-              <form onSubmit={handleBlindReturn}>
-                <div className="form-group">
-                  <label className="form-label">Code Produit (SKU)</label>
-                  <input 
-                    type="text" 
-                    className="form-control" 
-                    value={returnSku} 
-                    onChange={e => setReturnSku(e.target.value)} 
-                    required 
-                    placeholder="Scanner ou taper le code..."
-                    autoFocus
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Quantité à retourner</label>
-                  <input 
-                    type="number" 
-                    className="form-control" 
-                    min="1" 
-                    value={returnQty} 
-                    onChange={e => setReturnQty(parseInt(e.target.value))} 
-                    required 
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Motif du remboursement</label>
-                  <select 
-                    className="form-control" 
-                    value={returnReason} 
-                    onChange={e => setReturnReason(e.target.value)}
-                    required
-                  >
-                    <option value="Produit défectueux">Produit défectueux</option>
-                    <option value="Erreur de taille/couleur">Erreur de taille/couleur</option>
-                    <option value="Changement d'avis du client">Changement d'avis du client</option>
-                    <option value="Produit expiré / endommagé">Produit expiré / endommagé</option>
-                    <option value="Autre erreur caisse">Autre erreur caisse</option>
-                  </select>
-                </div>
-
-                <div className="form-group" style={{ marginTop: '1.5rem', borderTop: '1px solid var(--slate-200)', paddingTop: '1.5rem' }}>
-                  <label className="form-label" style={{ color: 'var(--danger-color)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>Code PIN Administrateur Requis <Lock size={16} /></label>
-                  <input 
-                    type="password" 
-                    className="form-control" 
-                    value={returnPin} 
-                    onChange={e => setReturnPin(e.target.value)} 
-                    required 
-                    maxLength={4}
-                    placeholder="••••"
-                    style={{ textAlign: 'center', fontSize: '1.5rem', letterSpacing: '0.5rem' }}
-                  />
-                </div>
-
-                {returnError && <div style={{ color: 'var(--danger-color)', marginBottom: '1rem', fontSize: '0.9rem' }}>{returnError}</div>}
-
-                <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
-                  <button type="button" onClick={() => setShowReturnModal(false)} className="btn btn-outline" style={{ flex: 1 }}>Annuler</button>
-                  <button type="submit" className="btn btn-primary" style={{ flex: 1, backgroundColor: 'var(--danger-color)', borderColor: 'var(--danger-color)' }} disabled={loading}>
-                    {loading ? 'Traitement...' : 'Rembourser'}
-                  </button>
-                </div>
-              </form>
             )}
+
+            <div className="pos-success-actions">
+              <Link
+                href={`/pos/invoice/${completedOrder.id}`}
+                target="_blank"
+                className="pos-btn-print-receipt"
+              >
+                <Receipt size={18} />
+                <span>Imprimer le Ticket</span>
+              </Link>
+
+              <button
+                type="button"
+                onClick={() => setCompletedOrder(null)}
+                className="pos-btn-next-sale"
+              >
+                Nouvelle Vente
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Lock Screen Overlay */}
-      {isLocked && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
-          backgroundColor: 'rgba(255,255,255,0.85)', zIndex: 9999,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          backdropFilter: 'blur(10px)'
-        }}>
-          <div className="glass-card" style={{ padding: '2rem', width: '400px', maxWidth: '90%', textAlign: 'center', backgroundColor: 'white', boxShadow: '0 20px 40px rgba(0,0,0,0.1)' }}>
-            <div style={{ backgroundColor: 'rgba(79, 70, 229, 0.1)', width: '80px', height: '80px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem auto' }}>
-              <Lock size={40} color="var(--accent-color)" />
+      {/* ── 8. Return / Refund Modal ──────────────────────────────────────── */}
+      {showReturnModal && (
+        <div
+          className="pos-modal-overlay"
+          onClick={() => setShowReturnModal(false)}
+        >
+          <div
+            className="pos-refund-modal animate-scale-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="pos-modal-header">
+              <h3>Remboursement / Retour Article</h3>
+              <button
+                type="button"
+                onClick={() => setShowReturnModal(false)}
+                className="pos-modal-close"
+              >
+                ×
+              </button>
             </div>
-            <h2 style={{ margin: '0 0 0.5rem 0', color: 'var(--slate-900)' }}>Caisse Verrouillée</h2>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>Inactivité détectée (4 min).<br/>Entrez votre PIN pour reprendre.</p>
-            
-            <form onSubmit={handleUnlock}>
-              <input 
-                type="password" 
-                className="form-control" 
-                value={unlockPin} 
-                onChange={e => setUnlockPin(e.target.value)} 
-                required 
-                maxLength={4}
-                placeholder="••••"
-                style={{ textAlign: 'center', fontSize: '2rem', letterSpacing: '1rem', marginBottom: '1rem' }}
+
+            {returnError && (
+              <div className="pos-alert-error">
+                <AlertCircle size={16} />
+                <span>{returnError}</span>
+              </div>
+            )}
+
+            {returnSuccessMsg && (
+              <div className="pos-alert-success">
+                <CheckCircle2 size={16} />
+                <span>{returnSuccessMsg}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleBlindReturn} className="pos-refund-form">
+              <div className="pos-refund-field">
+                <label>Code SKU de l&apos;article *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ex: PRD-123456"
+                  value={returnSku}
+                  onChange={(e) => setReturnSku(e.target.value)}
+                  className="pos-refund-input"
+                />
+              </div>
+
+              <div className="pos-refund-field">
+                <label>Quantité retournée (pièces) *</label>
+                <input
+                  type="number"
+                  min="1"
+                  required
+                  value={returnQty}
+                  onChange={(e) => setReturnQty(parseInt(e.target.value, 10) || 1)}
+                  className="pos-refund-input"
+                />
+              </div>
+
+              <div className="pos-refund-field">
+                <label>Motif du retour</label>
+                <input
+                  type="text"
+                  value={returnReason}
+                  onChange={(e) => setReturnReason(e.target.value)}
+                  className="pos-refund-input"
+                />
+              </div>
+
+              <div className="pos-refund-field">
+                <label>Code PIN Administrateur requis *</label>
+                <input
+                  type="password"
+                  required
+                  placeholder="Code PIN"
+                  value={returnPin}
+                  onChange={(e) => setReturnPin(e.target.value)}
+                  className="pos-refund-input"
+                />
+              </div>
+
+              <div className="pos-modal-actions">
+                <button
+                  type="button"
+                  onClick={() => setShowReturnModal(false)}
+                  className="pos-modal-cancel"
+                >
+                  Fermer
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="pos-modal-submit"
+                >
+                  {loading ? 'Validation...' : 'Valider le retour'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── 9. Auto-Lock Screen ────────────────────────────────────────────── */}
+      {isLocked && (
+        <div className="pos-lock-overlay">
+          <div className="pos-lock-card">
+            <Lock size={44} color="#004D40" />
+            <h2>Caisse Verrouillée</h2>
+            <p>Session suspendue pour inactivité. Saisissez votre PIN :</p>
+
+            {unlockError && (
+              <span className="pos-lock-err">{unlockError}</span>
+            )}
+
+            <form onSubmit={handleUnlock} className="pos-lock-form">
+              <input
+                type="password"
+                maxLength={6}
                 autoFocus
+                placeholder="PIN"
+                value={unlockPin}
+                onChange={(e) => setUnlockPin(e.target.value)}
+                className="pos-lock-input"
               />
-              {unlockError && <div style={{ color: 'var(--danger-color)', marginBottom: '1rem', fontWeight: 500 }}>{unlockError}</div>}
-              
-              <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '1rem', fontSize: '1.1rem', marginBottom: '1rem' }} disabled={loading}>
-                {loading ? 'Déverrouillage...' : 'Déverrouiller'}
+              <button
+                type="submit"
+                disabled={loading}
+                className="pos-lock-submit-btn"
+              >
+                {loading ? '...' : 'Déverrouiller'}
               </button>
             </form>
-            
-            <button onClick={() => logout()} className="btn btn-outline" style={{ width: '100%', color: 'var(--slate-500)', borderColor: 'var(--slate-200)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-              <LogOut size={18} /> Se déconnecter complètement
-            </button>
           </div>
         </div>
       )}
-
     </div>
   );
 }

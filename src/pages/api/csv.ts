@@ -12,22 +12,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       'Référence (SKU)',
       'Nom du produit',
       'Catégorie',
+      'Coût d\'Achat Unitaire',
       'Prix HT',
       'Prix TTC',
-      'Stock',
+      'Unités par Pack / Colis',
+      'Stock Total (Pièces)',
+      'Packs Complets',
+      'Pièces Détachées',
       'Description Courte',
       'Nom Fichier Image'
     ];
 
     const rows = products.map((product) => {
       const mainImageName = product.images.length > 0 ? `${product.sku}.webp` : '';
+      const unitsInPack = product.unitsPerCarton && product.unitsPerCarton > 1 ? product.unitsPerCarton : 1;
+      const fullPacks = Math.floor(product.stock / unitsInPack);
+      const looseUnits = product.stock % unitsInPack;
+
       return [
         product.sku,
         product.name,
         product.category,
+        product.purchasePrice !== null && product.purchasePrice !== undefined ? product.purchasePrice : '',
         product.priceHT,
         product.priceTTC,
+        product.unitsPerCarton || 1,
         product.stock,
+        fullPacks,
+        looseUnits,
         product.shortDescription || '',
         mainImageName
       ].map(field => `"${String(field).replace(/"/g, '""')}"`).join(',');

@@ -8,21 +8,23 @@ export default async function UsersPage() {
   const users = await getUsers();
 
   return (
-    <div className="users-page-container">
-      <header className="page-header-standard">
-        <div>
-          <div className="page-badge-standard">
-            <Users size={16} />
+    <div className="users-redesign-page">
+      <div className="users-hero-banner">
+        <div className="users-hero-top">
+          <div className="users-badge">
+            <Users size={14} />
             <span>Équipe & Sécurité</span>
           </div>
-          <h1 className="page-title-standard">Gestion des Utilisateurs & Caissiers</h1>
-          <p className="page-subtitle-standard">
-            Créez les accès de caisse, attribuez les rôles et protégez les sessions avec des codes PIN.
-          </p>
         </div>
-      </header>
+        <h1 className="users-hero-title">Gestion des Utilisateurs</h1>
+        <p className="users-hero-subtitle">
+          Créez les accès de caisse, attribuez les rôles et protégez les sessions avec des codes PIN.
+        </p>
+      </div>
 
-      <UserClient initialUsers={users} />
+      <div className="users-content-wrapper">
+        <UserClient initialUsers={users} />
+      </div>
     </div>
   );
 }
